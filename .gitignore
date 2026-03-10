@@ -21,3 +21,4 @@ venv.bak/
 
 output/**
 translation/**
+text-versions.json
