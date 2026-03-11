@@ -35,28 +35,21 @@ def _():
 @app.function
 def extract_textmap(ver: str, lang: str, dir: Path) -> list[pl.DataFrame]:
     results = []
-    dirpath, _, filenames = next(os.walk(dir))
-    for filename in filenames:
-        file = Path(dirpath) / filename
-        file_stem = file.stem
-        if re.match(rf"Text(Map)?{lang}(_\d)?", file_stem):
-            medium = False
-        elif re.match(rf"TextMap_Medium{lang}(_\d)?", file_stem):
-            medium = True
-        else:
-            continue
-        with open(file) as f:
-            data = orjson.loads(f.read())
-        results.append(
-            pl.DataFrame({"key": data.keys(), "value": data.values()})
-            .filter(pl.col.value != "")
-            .select(
-                pl.lit(ver).alias("version"),
-                pl.col.key,
-                pl.col.value,
-                pl.lit(medium).alias("medium"),
+    files = list(dir.glob("*.json"))
+    for file in files:
+        if re.match(rf"(Text{lang}|TextMap(_Medium)?{lang}(_\d)?)", file.stem):
+            with open(file) as f:
+                data = orjson.loads(f.read())
+            results.append(
+                pl.DataFrame({"key": data.keys(), "value": data.values()})
+                .filter(pl.col.value != "")
+                .select(
+                    pl.lit(ver).alias("version"),
+                    pl.lit("TextMap").alias("type"),
+                    pl.col.key,
+                    pl.col.value,
+                )
             )
-        )
     return results
 
 
