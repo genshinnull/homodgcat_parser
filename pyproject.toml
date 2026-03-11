@@ -9,6 +9,7 @@ dependencies = [
     "orjson>=3.11.7",
     "polars>=1.38.1",
     "pydantic>=2.12.5",
+    "pysubs2>=1.8.0",
 ]
 
 [dependency-groups]
