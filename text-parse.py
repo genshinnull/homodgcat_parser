@@ -53,6 +53,29 @@ def extract_textmap(ver: str, lang: str, dir: Path) -> list[pl.DataFrame]:
     return results
 
 
+@app.function
+def extract_readable(ver: str, lang: str, dir: Path) -> pl.DataFrame:
+    data = []
+    for file in dir.glob("*.txt"):
+        with open(file) as f:
+            data.append(
+                {
+                    "key": file.stem.split(f"_{lang}")[0],
+                    "value": f.read().strip(),
+                }
+            )
+    return (
+        pl.DataFrame(data).select(
+            pl.lit(ver).alias("version"),
+            pl.lit("Readable").alias("type"),
+            pl.col.key,
+            pl.col.value,
+        )
+        if data
+        else pl.DataFrame()
+    )
+
+
 @app.cell
 def _(versions):
     text_data = {lang: [] for lang in LANGS}
@@ -83,10 +106,18 @@ def _(versions):
                     _ver["ver"], _lang, _path / "TextMap"
                 ):
                     text_data[_lang].append(pl.concat(curr_textmap))
+                if not (
+                    curr_readable := extract_readable(
+                        _ver["ver"], _lang, _path / "Readable" / _lang
+                    )
+                ).is_empty():
+                    text_data[_lang].append(curr_readable)
             if _ver.get("hash"):
                 _repo.git.clean("-fd")
                 _repo.git.reset("HEAD", "--hard")
             bar.update()
+    text_data = {lang: pl.concat(data) for lang, data in text_data.items()}
+    {lang: len(data) for lang, data in text_data.items()}
     return
 
 
