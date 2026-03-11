@@ -49,7 +49,7 @@ def extract_textmap(ver: str, lang: str, dir: Path) -> pl.DataFrame:
                     pl.lit(ver).alias("version"),
                     pl.lit("TextMap").alias("type"),
                     pl.col.key,
-                    pl.col.value,
+                    pl.col.value.str.replace_all(r"\\n", "\n"),
                 )
             )
     return pl.concat(results) if results else pl.DataFrame()
