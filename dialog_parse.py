@@ -67,12 +67,6 @@ def read_textmap(lang: str) -> dict[str, str]:
     return textmap
 
 
-@app.function
-def write_json(file_path: Path, data) -> None:
-    with open(file_path, "wb") as f:
-        f.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
-
-
 @app.cell
 def _():
     translation = tuple(
@@ -781,10 +775,6 @@ def _(dialog_named_df):
     for _lang in LANGS:
         _output_df = dialog_named_df.pipe(resolve_text, read_textmap(_lang))
         _output_path_base = _output_path / f"GI_Talk_{_lang}_{VERSION}"
-        write_json(
-            _output_path_base.with_suffix(".json"),
-            _output_df.to_dicts(),
-        )
         _output_df.write_parquet(
             _output_path_base.with_suffix(".parquet"),
         )
