@@ -758,7 +758,9 @@ def resolve_text(
         ),
         talkRoleName=pl.col.talkRoleName.replace_strict(textmap, default=None),
         talkTitle=pl.col.talkTitle.replace_strict(textmap, default=None),
-        talkContent=pl.col.talkContent.replace_strict(textmap, default=None),
+        talkContent=pl.col.talkContent.replace_strict(textmap, default=None)
+        .str.replace_all(r"\\n", "\n")
+        .str.strip_chars(),
         questIdName=pl.col.questIdName.replace_strict(textmap, default=None),
         activityIdName=pl.col.activityIdName.replace_strict(
             textmap, default=None

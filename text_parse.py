@@ -74,7 +74,7 @@ def extract_textmap(ver: str, lang: str, dir: Path) -> pl.DataFrame:
                     pl.lit(ver).alias("version"),
                     pl.lit("TextMap").alias("type"),
                     pl.col.key,
-                    pl.col.value.str.replace_all(r"\\n", "\n"),
+                    pl.col.value,
                 )
             )
     return pl.concat(results) if results else pl.DataFrame()
@@ -287,6 +287,9 @@ def _(document_df, localization_df, text_data):
             text_data[_lang]
             .join(_readable_df, on="key", how="left")
             .sort("version")
+            .with_columns(
+                pl.col.value.str.replace_all(r"\\n", "\n").str.strip_chars(),
+            )
             .with_columns(
                 pl.col.version.first().over("key").alias("k_from"),
                 pl.col.version.last().over("key").alias("k_to"),
