@@ -317,7 +317,15 @@ def _(text_data_transformed):
         text_data_transformed[_lang].filter(
             pl.col.version == pl.col.version.max()
         ).select(
-            "type", "key", "value", "Paged", "Book", "Letter", "v_from", "kv_from"
+            "type",
+            "key",
+            "value",
+            "Paged",
+            "Book",
+            "Letter",
+            "k_from",
+            "v_from",
+            "kv_from",
         ).sort("value", "type", "key").write_parquet(
             f"output/GI_Text_{_lang}_{VERSION}.parquet"
         )
