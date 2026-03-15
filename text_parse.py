@@ -112,7 +112,7 @@ def extract_subtitle(ver: str, lang: str, dir: Path) -> pl.DataFrame:
     for file in files:
         try:
             sub = pysubs2.load(file)
-            sub_str = "\n\n".join([line.plaintext for line in sub]).strip()
+            sub_str = "\n".join([line.plaintext for line in sub]).strip()
         except pysubs2.exceptions.FormatAutodetectionError:
             sub_str = ""
         data.append(
