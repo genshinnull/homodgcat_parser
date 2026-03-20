@@ -218,6 +218,36 @@ def _():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
+    ## ReminderExcelConfigData
+    """)
+    return
+
+
+@app.cell
+def _():
+    reminder_df = pl.read_json(
+        DATA_PATH / "ExcelBinOutput/ReminderExcelConfigData.json",
+        schema={
+            "id": pl.Int64,
+            "speakerTextMapHash": pl.String,
+            "contentTextMapHash": pl.String,
+            "style": pl.String,
+            "nextReminderId": pl.Int64,
+        },
+    ).rename(
+        {
+            "speakerTextMapHash": "talkRoleIdName",
+            "contentTextMapHash": "talkContent",
+            "style": "talkRoleType",
+        }
+    )
+    reminder_df
+    return (reminder_df,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     ## BinOutput/Talk & BinOutput/Quest
     """)
     return
@@ -740,6 +770,70 @@ def _(
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
+    ### Reminders
+    """)
+    return
+
+
+@app.cell
+def _(reminder_df):
+    _reminder_data = reminder_df.to_dicts()
+    _groups = []
+    for _reminder in _reminder_data:
+        for _group in _groups:
+            if _reminder["id"] in _group["ids"]:
+                _group["data"].append(_reminder)
+                if _reminder["nextReminderId"] != 0:
+                    _group["ids"].add(_reminder["nextReminderId"])
+                break
+        else:
+            _groups.append({"ids": {_reminder["id"]}, "data": [_reminder]})
+            if _reminder["nextReminderId"] != 0:
+                _groups[-1]["ids"].add(_reminder["nextReminderId"])
+    reminder_grp_df = (
+        pl.DataFrame(_groups)
+        .with_row_index(name="talkId", offset=1)
+        .with_columns(pl.col.talkId.reverse().cast(pl.Int32).neg())
+        .explode("data")
+        .unnest("data")
+        .select("id", "talkRoleIdName", "talkContent", "talkRoleType", "talkId")
+    )
+    reminder_grp_df
+    return (reminder_grp_df,)
+
+
+@app.cell
+def _(dialog_named_df, reminder_grp_df):
+    dialog_final_df = pl.concat(
+        [
+            reminder_grp_df.select(
+                pl.col.id,
+                pl.lit(None, dtype=pl.String).alias("talkRoleId"),
+                pl.col.talkRoleIdName,
+                pl.lit(None, dtype=pl.String).alias("talkRoleName"),
+                pl.lit(None, dtype=pl.String).alias("talkTitle"),
+                pl.col.talkContent,
+                pl.col.talkRoleType,
+                pl.col.talkId.cast(pl.Int64),
+                pl.lit(None, dtype=pl.Int64).alias("questId"),
+                pl.lit(None, dtype=pl.String).alias("questIdName"),
+                pl.lit(None, dtype=pl.Int64).alias("activityId"),
+                pl.lit(None, dtype=pl.String).alias("activityIdName"),
+                pl.lit(None, dtype=pl.Int64).alias("chapterId"),
+                pl.lit(None, dtype=pl.String).alias("chapterTitle"),
+                pl.lit(None, dtype=pl.String).alias("chapterNum"),
+                pl.lit("REMINDER").alias("type"),
+            ),
+            dialog_named_df,
+        ]
+    )
+    dialog_final_df
+    return (dialog_final_df,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     ## Output
     """)
     return
@@ -771,15 +865,20 @@ def resolve_text(
 
 
 @app.cell
-def _(dialog_named_df):
+def _(dialog_final_df):
     _output_path = Path("output")
     os.makedirs(_output_path, exist_ok=True)
     for _lang in LANGS:
-        _output_df = dialog_named_df.pipe(resolve_text, read_textmap(_lang))
+        _output_df = dialog_final_df.pipe(resolve_text, read_textmap(_lang))
         _output_path_base = _output_path / f"GI_Talk_{_lang}_{VERSION}"
         _output_df.write_parquet(
             _output_path_base.with_suffix(".parquet"),
         )
+    return
+
+
+@app.cell
+def _():
     return
 
 
