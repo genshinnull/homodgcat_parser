@@ -1,14 +1,13 @@
 import marimo
 
-__generated_with = "0.20.4"
+__generated_with = "0.21.1"
 app = marimo.App(width="medium")
 
 with app.setup:
-    import marimo as mo
-
     import os
     from pathlib import Path
 
+    import marimo as mo
     import orjson
     import polars as pl
     from pydantic import (
@@ -17,6 +16,8 @@ with app.setup:
         Field,
         ValidationError,
     )
+
+    from utils import get_textmap
 
     DATA_PATH = Path(os.environ["DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
@@ -55,16 +56,6 @@ def load_file(
             for new, old in translation:
                 file_content = file_content.replace(old, new)
     return file_content
-
-
-@app.function
-def read_textmap(lang: str) -> dict[str, str]:
-    textmap = {}
-    textmap_path = DATA_PATH / "TextMap"
-    for file in next(textmap_path.walk())[2]:
-        if file.startswith(f"TextMap{lang}"):
-            textmap.update(orjson.loads(load_file(textmap_path / file)))
-    return textmap
 
 
 @app.cell
@@ -869,7 +860,9 @@ def _(dialog_final_df):
     _output_path = Path("output")
     os.makedirs(_output_path, exist_ok=True)
     for _lang in LANGS:
-        _output_df = dialog_final_df.pipe(resolve_text, read_textmap(_lang))
+        _output_df = dialog_final_df.pipe(
+            resolve_text, get_textmap(DATA_PATH / "TextMap", _lang)
+        )
         _output_path_base = _output_path / f"GI_Talk_{_lang}_{VERSION}"
         _output_df.write_parquet(
             _output_path_base.with_suffix(".parquet"),

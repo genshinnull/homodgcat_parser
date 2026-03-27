@@ -1,19 +1,19 @@
 import marimo
 
-__generated_with = "0.20.4"
+__generated_with = "0.21.1"
 app = marimo.App(width="medium")
 
 with app.setup:
-    import marimo as mo
-
     import os
-    import re
     from pathlib import Path
 
+    import marimo as mo
     import orjson
     import polars as pl
     import pysubs2
     from git import Repo
+
+    from utils import get_textmap
 
     DATA_PATH = Path(os.environ["DATA_PATH"])
     CBT3_DATA_PATH = Path(os.environ["CBT3_DATA_PATH"])
@@ -61,23 +61,18 @@ def _():
 
 @app.function
 def extract_textmap(ver: str, lang: str, dir: Path) -> pl.DataFrame:
-    results = []
-    files = list(dir.glob("*.json"))
-    for file in files:
-        if re.match(rf"(Text{lang}|TextMap(_Medium)?{lang}(_\d)?)", file.stem):
-            with open(file) as f:
-                data = orjson.loads(f.read())
-            results.append(
-                pl.DataFrame({"key": data.keys(), "value": data.values()})
-                .filter(pl.col.value != "")
-                .select(
-                    pl.lit(ver).alias("version"),
-                    pl.lit("TextMap").alias("type"),
-                    pl.col.key,
-                    pl.col.value,
-                )
+    if data := get_textmap(dir, lang):
+        return (
+            pl.DataFrame({"key": data.keys(), "value": data.values()})
+            .filter(pl.col.value != "")
+            .select(
+                pl.lit(ver).alias("version"),
+                pl.lit("TextMap").alias("type"),
+                pl.col.key,
+                pl.col.value,
             )
-    return pl.concat(results) if results else pl.DataFrame()
+        )
+    return pl.DataFrame()
 
 
 @app.function
