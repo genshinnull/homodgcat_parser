@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.20.4"
+__generated_with = "0.21.1"
 app = marimo.App(width="medium")
 
 
@@ -35,7 +35,9 @@ def _():
 
     import orjson
 
-    return Path, csv, orjson, os
+    from utils import get_textmap
+
+    return Path, csv, get_textmap, orjson, os
 
 
 @app.cell
@@ -62,27 +64,41 @@ def _():
 
 
 @app.function
-def find(data: dict, hint):
+def get_text_hashes(target: str, textmap: dict[str, str]) -> list[str]:
+    return [hash for hash, text in textmap.items() if text == target]
+
+
+@app.function
+def find(data: dict, hints: list):
     for field in data.items():
-        if field[1] == hint:
-            return field[0]
+        for hint in hints:
+            if field[1] == hint:
+                return field[0]
     else:
         raise ValueError
 
 
 @app.function
-def find_sub(data: dict, hint):
+def find_sub(data: dict, hints: list):
     for field in data.items():
-        if (
-            isinstance(field[1], list)
-            and len(field[1]) > 0
-            and isinstance(field[1][0], dict)
-        ):
-            for sub_field in field[1][0].items():
-                if sub_field[1] == hint:
-                    return field
+        for hint in hints:
+            if (
+                isinstance(field[1], list)
+                and len(field[1]) > 0
+                and isinstance(field[1][0], dict)
+            ):
+                for sub_field in field[1][0].items():
+                    if sub_field[1] == hint:
+                        return field
     else:
         raise ValueError
+
+
+@app.cell
+def _(DATA_PATH, get_textmap):
+    textmap = get_textmap(DATA_PATH / "TextMap", "CHS")
+    len(textmap)
+    return (textmap,)
 
 
 @app.cell(hide_code=True)
@@ -102,8 +118,8 @@ def _(load_json):
 
 @app.cell
 def _(output, storyboard_sample):
-    output.append(("id", find(storyboard_sample[0], [510000101])))
-    output.append(("name", find(storyboard_sample[0], 1253955835)))
+    output.append(("id", find(storyboard_sample[0], [[510000101]])))
+    output.append(("name", find(storyboard_sample[0], [1253955835])))
     return
 
 
@@ -124,25 +140,49 @@ def _(load_json):
 
 @app.cell
 def _(output, quest_sample):
-    output.append(("type", find(quest_sample, "AQ")))
-    output.append(("id", find(quest_sample, 5024)))
-    output.append(("chapterId", find(quest_sample, 1504)))
+    output.append(("type", find(quest_sample, ["AQ"])))
+    output.append(("id", find(quest_sample, [5024])))
+    output.append(("chapterId", find(quest_sample, [1504])))
     return
 
 
 @app.cell
-def _(output, quest_sample):
-    dialogList = find_sub(quest_sample, "TALK_SHOW_DEFAULT")
+def _(output, quest_sample, textmap):
+    dialogList = find_sub(quest_sample, ["TALK_SHOW_DEFAULT"])
     output.append(("dialogList", dialogList[0]))
-    output.append(("talkContentTextMapHash", find(dialogList[1][0], 837085410)))
-    output.append(("talkRoleNameTextMapHash", find(dialogList[1][1], 3375747035)))
-    output.append(("talkTitleTextMapHash", find(dialogList[1][1], 4250729636)))
+    output.append(
+        (
+            "talkContentTextMapHash",
+            find(
+                dialogList[1][0],
+                [int(hash) for hash in get_text_hashes("(test)台词文本", textmap)],
+            ),
+        )
+    )
+    output.append(
+        (
+            "talkRoleNameTextMapHash",
+            find(
+                dialogList[1][1],
+                [int(hash) for hash in get_text_hashes("阿伽娅", textmap)],
+            ),
+        )
+    )
+    output.append(
+        (
+            "talkTitleTextMapHash",
+            find(
+                dialogList[1][1],
+                [int(hash) for hash in get_text_hashes("「守烛人」", textmap)],
+            ),
+        )
+    )
     output.append(
         (
             "talkRole",
             find(
                 dialogList[1][0],
-                {"_id": "", "_roleId": 0, "_type": "TALK_ROLE_NONE"},
+                [{"_id": "", "_roleId": 0, "_type": "TALK_ROLE_NONE"}],
             ),
         )
     )
@@ -151,9 +191,9 @@ def _(output, quest_sample):
 
 @app.cell
 def _(output, quest_sample):
-    talks = find_sub(quest_sample, "PLAY_MODE_SINGLE")
+    talks = find_sub(quest_sample, ["PLAY_MODE_SINGLE"])
     output.append(("talks", talks[0]))
-    output.append(("questId", find(talks[1][0], 5024)))
+    output.append(("questId", find(talks[1][0], [5024])))
     return
 
 
@@ -174,7 +214,7 @@ def _(load_json):
 
 @app.cell
 def _(output, talk_sample):
-    output.append(("talkId", find(talk_sample, 30610)))
+    output.append(("talkId", find(talk_sample, [30610])))
     return
 
 
@@ -195,7 +235,7 @@ def _(load_json, talk_sample):
 
 @app.cell
 def _(activity_sample, output):
-    output.append(("activityId", find(activity_sample, 2008)))
+    output.append(("activityId", find(activity_sample, [2008])))
     return
 
 
