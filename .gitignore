@@ -19,6 +19,8 @@ venv.bak/
 # Ruff stuff:
 .ruff_cache/
 
+product/**
+staging/**
 output/**
 translation/**
 text_versions.json

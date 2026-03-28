@@ -17,10 +17,7 @@ with app.setup:
         ValidationError,
     )
 
-    from utils import get_textmap
-
     DATA_PATH = Path(os.environ["DATA_PATH"])
-    LANGS = os.environ["LANGS"].split(",")
     VERSION = os.environ["VERSION"]
 
 
@@ -42,7 +39,7 @@ def _():
 
 @app.cell
 def _():
-    DATA_PATH, LANGS, VERSION
+    DATA_PATH, VERSION
     return
 
 
@@ -830,48 +827,13 @@ def _():
     return
 
 
-@app.function
-def resolve_text(
-    dialog_df: pl.DataFrame,
-    textmap: dict[str, str],
-) -> pl.DataFrame:
-    return dialog_df.with_columns(
-        talkRoleIdName=pl.when(pl.col.talkRoleId.str.contains(r"\D"))
-        .then("talkRoleId")
-        .otherwise(
-            pl.col.talkRoleIdName.replace_strict(textmap, default=None)
-        ),
-        talkRoleName=pl.col.talkRoleName.replace_strict(textmap, default=None),
-        talkTitle=pl.col.talkTitle.replace_strict(textmap, default=None),
-        talkContent=pl.col.talkContent.replace_strict(textmap, default=None)
-        .str.replace_all(r"\\n", "\n")
-        .str.strip_chars(),
-        questIdName=pl.col.questIdName.replace_strict(textmap, default=None),
-        activityIdName=pl.col.activityIdName.replace_strict(
-            textmap, default=None
-        ),
-        chapterTitle=pl.col.chapterTitle.replace_strict(textmap, default=None),
-        chapterNum=pl.col.chapterNum.replace_strict(textmap, default=None),
-    )
-
-
 @app.cell
 def _(dialog_final_df):
-    _output_path = Path("output")
+    _output_path = Path("staging/talk0")
     os.makedirs(_output_path, exist_ok=True)
-    for _lang in LANGS:
-        _output_df = dialog_final_df.pipe(
-            resolve_text, get_textmap(DATA_PATH / "TextMap", _lang)
-        )
-        _output_path_base = _output_path / f"GI_Talk_{_lang}_{VERSION}"
-        _output_df.write_parquet(
-            _output_path_base.with_suffix(".parquet"),
-        )
-    return
-
-
-@app.cell
-def _():
+    dialog_final_df.write_parquet(
+        Path(_output_path / f"GI_Talk_{VERSION}.parquet")
+    )
     return
 
 

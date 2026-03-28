@@ -6,7 +6,10 @@ import polars as pl
 VERSION = os.environ["VERSION"]
 VERSION_OLD = os.environ["VERSION_OLD"]
 LANGS = os.environ["LANGS"].split(",")
-OUTPUT_PATH = Path("output")
+INPUT_PATH = Path("staging/talk1")
+OUTPUT_PATH = Path("product")
+
+os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 cols = [VERSION_OLD, f"{VERSION}_old", f"{VERSION}_new"]
 
@@ -16,9 +19,9 @@ def condense_col(expr: pl.Expr) -> pl.Expr:
 
 
 for lang in LANGS:
-    old_df = pl.read_parquet(OUTPUT_PATH / f"GI_Talk_{lang}_{VERSION_OLD}.parquet")
+    old_df = pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{VERSION_OLD}.parquet")
     new_df = pl.read_parquet(
-        OUTPUT_PATH / f"GI_Talk_{lang}_{VERSION}.parquet"
+        INPUT_PATH / f"GI_Talk_{lang}_{VERSION}.parquet"
     ).with_columns(new=~pl.col.id.is_in(old_df.get_column("id").unique().to_list()))
     old_in_new_df = new_df.filter(~pl.col.new).drop("new")
     new_in_new_df = new_df.filter(pl.col.new).drop("new")
@@ -65,7 +68,7 @@ for lang in LANGS:
 
     with (
         open(
-            OUTPUT_PATH / f"GI_Talk_{lang}_Stats_{VERSION_OLD}-{VERSION}.md", "w"
+            OUTPUT_PATH / f"GI_Talk_{lang}_Diff_Stats.md", "w"
         ) as f,
         pl.Config(
             tbl_rows=-1,
@@ -88,5 +91,5 @@ for lang in LANGS:
         )
 
     new_df.write_parquet(
-        OUTPUT_PATH / f"GI_Talk_{lang}_{VERSION_OLD}-{VERSION}.parquet"
+        OUTPUT_PATH / f"GI_Talk_{lang}.parquet"
     )
