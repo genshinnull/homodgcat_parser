@@ -57,12 +57,6 @@ def _(DATA_PATH, Path, orjson):
     return (load_json,)
 
 
-@app.cell
-def _():
-    output = [("type", "damageRatio"), ("id", "_id"), ("type", "_type")]
-    return (output,)
-
-
 @app.function
 def get_text_hashes(target: str, textmap: dict[str, str]) -> list[str]:
     return [hash for hash, text in textmap.items() if text == target]
@@ -117,10 +111,11 @@ def _(load_json):
 
 
 @app.cell
-def _(output, storyboard_sample):
-    output.append(("id", find(storyboard_sample[0], [[510000101]])))
-    output.append(("name", find(storyboard_sample[0], [1253955835])))
-    return
+def _(storyboard_sample):
+    storyboard_id_field = ("id", find(storyboard_sample[0], [[510000101]]))
+    storyboard_name_field = ("name", find(storyboard_sample[0], [1253955835]))
+    storyboard_id_field, storyboard_name_field
+    return storyboard_id_field, storyboard_name_field
 
 
 @app.cell(hide_code=True)
@@ -139,62 +134,68 @@ def _(load_json):
 
 
 @app.cell
-def _(output, quest_sample):
-    output.append(("type", find(quest_sample, ["AQ"])))
-    output.append(("id", find(quest_sample, [5024])))
-    output.append(("chapterId", find(quest_sample, [1504])))
-    return
+def _(quest_sample):
+    quest_type_field = ("type", find(quest_sample, ["AQ"]))
+    quest_id_field = ("id", find(quest_sample, [5024]))
+    quest_chapterId_field = ("chapterId", find(quest_sample, [1504]))
+    quest_type_field, quest_id_field, quest_chapterId_field
+    return quest_chapterId_field, quest_id_field, quest_type_field
 
 
 @app.cell
-def _(output, quest_sample, textmap):
+def _(quest_sample, textmap):
     dialogList = find_sub(quest_sample, ["TALK_SHOW_DEFAULT"])
-    output.append(("dialogList", dialogList[0]))
-    output.append(
-        (
-            "talkContentTextMapHash",
-            find(
-                dialogList[1][0],
-                [int(hash) for hash in get_text_hashes("(test)台词文本", textmap)],
-            ),
-        )
+    quest_dialogList_field = ("dialogList", dialogList[0])
+    quest_talkContentTextMapHash_field = (
+        "talkContentTextMapHash",
+        find(
+            dialogList[1][0],
+            [int(hash) for hash in get_text_hashes("(test)台词文本", textmap)],
+        ),
     )
-    output.append(
-        (
-            "talkRoleNameTextMapHash",
-            find(
-                dialogList[1][1],
-                [int(hash) for hash in get_text_hashes("阿伽娅", textmap)],
-            ),
-        )
+    quest_talkRoleNameTextMapHash_field = (
+        "talkRoleNameTextMapHash",
+        find(
+            dialogList[1][1],
+            [int(hash) for hash in get_text_hashes("阿伽娅", textmap)],
+        ),
     )
-    output.append(
-        (
-            "talkTitleTextMapHash",
-            find(
-                dialogList[1][1],
-                [int(hash) for hash in get_text_hashes("「守烛人」", textmap)],
-            ),
-        )
+    quest_talkTitleTextMapHash_field = (
+        "talkTitleTextMapHash",
+        find(
+            dialogList[1][1],
+            [int(hash) for hash in get_text_hashes("「守烛人」", textmap)],
+        ),
     )
-    output.append(
-        (
-            "talkRole",
-            find(
-                dialogList[1][0],
-                [{"_id": "", "_roleId": 0, "_type": "TALK_ROLE_NONE"}],
-            ),
-        )
+    quest_talkRole_field = (
+        "talkRole",
+        find(
+            dialogList[1][0],
+            [{"_id": "", "_roleId": 0, "_type": "TALK_ROLE_NONE"}],
+        ),
     )
-    return
+    (
+        quest_dialogList_field,
+        quest_talkContentTextMapHash_field,
+        quest_talkRoleNameTextMapHash_field,
+        quest_talkTitleTextMapHash_field,
+        quest_talkRole_field,
+    )
+    return (
+        quest_dialogList_field,
+        quest_talkContentTextMapHash_field,
+        quest_talkRoleNameTextMapHash_field,
+        quest_talkRole_field,
+        quest_talkTitleTextMapHash_field,
+    )
 
 
 @app.cell
-def _(output, quest_sample):
+def _(quest_sample):
     talks = find_sub(quest_sample, ["PLAY_MODE_SINGLE"])
-    output.append(("talks", talks[0]))
-    output.append(("questId", find(talks[1][0], [5024])))
-    return
+    quest_talks_field = ("talks", talks[0])
+    quest_questId_field = ("questId", find(talks[1][0], [5024]))
+    return quest_questId_field, quest_talks_field
 
 
 @app.cell(hide_code=True)
@@ -213,9 +214,10 @@ def _(load_json):
 
 
 @app.cell
-def _(output, talk_sample):
-    output.append(("talkId", find(talk_sample, [30610])))
-    return
+def _(talk_sample):
+    talk_talkId_field = ("talkId", find(talk_sample, [30610]))
+    talk_talkId_field
+    return (talk_talkId_field,)
 
 
 @app.cell(hide_code=True)
@@ -234,9 +236,9 @@ def _(load_json, talk_sample):
 
 
 @app.cell
-def _(activity_sample, output):
-    output.append(("activityId", find(activity_sample, [2008])))
-    return
+def _(activity_sample):
+    activity_activityId_field = ("activityId", find(activity_sample, [2008]))
+    return (activity_activityId_field,)
 
 
 @app.cell(hide_code=True)
@@ -245,6 +247,45 @@ def _(mo):
     ## Output
     """)
     return
+
+
+@app.cell
+def _(
+    activity_activityId_field,
+    quest_chapterId_field,
+    quest_dialogList_field,
+    quest_id_field,
+    quest_questId_field,
+    quest_talkContentTextMapHash_field,
+    quest_talkRoleNameTextMapHash_field,
+    quest_talkRole_field,
+    quest_talkTitleTextMapHash_field,
+    quest_talks_field,
+    quest_type_field,
+    storyboard_id_field,
+    storyboard_name_field,
+    talk_talkId_field,
+):
+    output = [
+        ("type", "damageRatio"),
+        ("id", "_id"),
+        ("type", "_type"),
+        storyboard_id_field,
+        storyboard_name_field,
+        quest_type_field,
+        quest_id_field,
+        quest_chapterId_field,
+        quest_dialogList_field,
+        quest_talkContentTextMapHash_field,
+        quest_talkRoleNameTextMapHash_field,
+        quest_talkTitleTextMapHash_field,
+        quest_talkRole_field,
+        quest_talks_field,
+        quest_questId_field,
+        talk_talkId_field,
+        activity_activityId_field,
+    ]
+    return (output,)
 
 
 @app.cell
