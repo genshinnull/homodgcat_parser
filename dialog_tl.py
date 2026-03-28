@@ -49,9 +49,9 @@ def _(Path, os):
 
 
 @app.cell
-def _(DATA_PATH, Path, orjson):
+def _(Path, orjson):
     def load_json(path: Path):
-        with open(DATA_PATH / path) as f:
+        with open(path) as f:
             return orjson.loads(f.read())
 
     return (load_json,)
@@ -104,8 +104,10 @@ def _(mo):
 
 
 @app.cell
-def _(load_json):
-    storyboard_sample = load_json("ExcelBinOutput/AnecdoteExcelConfigData.json")
+def _(DATA_PATH, load_json):
+    storyboard_sample = load_json(
+        DATA_PATH / "ExcelBinOutput/AnecdoteExcelConfigData.json"
+    )
     type(storyboard_sample), len(storyboard_sample)
     return (storyboard_sample,)
 
@@ -127,8 +129,8 @@ def _(mo):
 
 
 @app.cell
-def _(load_json):
-    quest_sample = load_json("BinOutput/Quest/5024.json")
+def _(DATA_PATH, load_json):
+    quest_sample = load_json(DATA_PATH / "BinOutput/Quest/5024.json")
     type(quest_sample), len(quest_sample)
     return (quest_sample,)
 
@@ -207,8 +209,8 @@ def _(mo):
 
 
 @app.cell
-def _(load_json):
-    talk_sample = load_json("BinOutput/Talk/Quest/30610.json")
+def _(DATA_PATH, load_json):
+    talk_sample = load_json(DATA_PATH / "BinOutput/Talk/Quest/30610.json")
     type(talk_sample), len(talk_sample)
     return (talk_sample,)
 
@@ -229,8 +231,8 @@ def _(mo):
 
 
 @app.cell
-def _(load_json, talk_sample):
-    activity_sample = load_json("BinOutput/Quest/40020.json")
+def _(DATA_PATH, load_json, talk_sample):
+    activity_sample = load_json(DATA_PATH / "BinOutput/Quest/40020.json")
     type(activity_sample), len(talk_sample)
     return (activity_sample,)
 
