@@ -226,6 +226,7 @@ def _():
                 pl.col.titleTextMapHash,
             )
             .filter(~pl.col.documentType.is_in(["DynamicBook", "Video"]))
+            .with_columns(pl.col.documentType.str.to_lowercase())
         )
         .explode("id")
         .pivot(
@@ -262,39 +263,26 @@ def _(document_df, localization_df, text_data):
             localization_df, on="id", how="inner", validate="1:1"
         ).select(
             pl.col.key,
-            pl.col.Paged.replace_strict(
+            pl.col.paged.replace_strict(
                 _tm_df.get_column("key"),
                 _tm_df.get_column("value"),
                 default=None,
             ),
-            pl.col.Book.replace_strict(
+            pl.col.book.replace_strict(
                 _tm_df.get_column("key"),
                 _tm_df.get_column("value"),
                 default=None,
             ),
-            pl.col.Letter.replace_strict(
+            pl.col.letter.replace_strict(
                 _tm_df.get_column("key"),
                 _tm_df.get_column("value"),
                 default=None,
             ),
         )
-        text_data_transformed[_lang] = (
-            text_data[_lang]
-            .join(_readable_df, on="key", how="left")
-            .sort("version")
-            .with_columns(
-                pl.col.value.str.replace_all(r"\\n", "\n").str.strip_chars(),
-            )
-            .with_columns(
-                pl.col.version.first().over("key").alias("k_from"),
-                pl.col.version.last().over("key").alias("k_to"),
-                pl.col.version.first().over("value").alias("v_from"),
-                pl.col.version.last().over("value").alias("v_to"),
-                pl.col.version.first().over("key", "value").alias("kv_from"),
-                pl.col.version.last().over("key", "value").alias("kv_to"),
-            )
+        text_data_transformed[_lang] = text_data[_lang].join(
+            _readable_df, on="key", how="left"
         )
-    {lang: len(data) for lang, data in text_data.items()}
+    {lang: len(data) for lang, data in text_data_transformed.items()}
     return (text_data_transformed,)
 
 
@@ -308,25 +296,12 @@ def _():
 
 @app.cell
 def _(text_data_transformed):
+    _output_path = Path("staging/text0")
+    os.makedirs(_output_path, exist_ok=True)
     for _lang in LANGS:
-        text_data_transformed[_lang].filter(
-            pl.col.version == pl.col.version.max()
-        ).select(
-            "type",
-            "key",
-            "value",
-            "Paged",
-            "Book",
-            "Letter",
-            "k_from",
-            "v_from",
-            "kv_from",
-        ).sort("value", "type", "key").write_parquet(
-            f"output/GI_Text_{_lang}_{VERSION}.parquet"
-        )
         text_data_transformed[_lang].sort(
             "value", "type", "key", "version"
-        ).write_parquet(f"output/GI_Text_{_lang}_{VERSION}_Full.parquet")
+        ).write_parquet(_output_path / f"GI_Text_{_lang}_{VERSION}.parquet")
     return
 
 
