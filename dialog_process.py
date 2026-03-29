@@ -4,11 +4,14 @@ __generated_with = "0.21.1"
 app = marimo.App(width="medium")
 
 with app.setup:
-    import marimo as mo
-    import polars as pl
     import os
-    from utils import get_textmap
     from pathlib import Path
+
+    import marimo as mo
+    import orjson
+    import polars as pl
+
+    from utils import get_textmap, replace_term
 
     DATA_PATH = Path(os.environ["DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
@@ -23,6 +26,13 @@ def _():
 
 @app.cell
 def _():
+    with open("localization.json") as _f:
+        loc = orjson.loads(_f.read())
+    return (loc,)
+
+
+@app.cell
+def _():
     textmap = {}
     for _lang in LANGS:
         textmap[_lang] = get_textmap(DATA_PATH / "TextMap", _lang)
@@ -30,61 +40,69 @@ def _():
 
 
 @app.function
+def map_text(expr: pl.Expr, textmap: dict[str, str]) -> pl.Expr:
+    return expr.replace_strict(textmap, default=None)
+
+
+@app.function
 def resolve_text(
-    dialog_df: pl.DataFrame,
+    df: pl.DataFrame,
     textmap: dict[str, str],
 ) -> pl.DataFrame:
-    return dialog_df.with_columns(
+    return df.with_columns(
         talkRoleIdName=pl.when(pl.col.talkRoleId.str.contains(r"\D"))
         .then("talkRoleId")
-        .otherwise(
-            pl.col.talkRoleIdName.replace_strict(textmap, default=None)
-        ),
-        talkRoleName=pl.col.talkRoleName.replace_strict(textmap, default=None),
-        talkTitle=pl.col.talkTitle.replace_strict(textmap, default=None),
-        talkContent=pl.col.talkContent.replace_strict(textmap, default=None)
-        .str.replace_all(r"\\n", "\n")
-        .str.strip_chars(),
-        questIdName=pl.col.questIdName.replace_strict(textmap, default=None),
-        activityIdName=pl.col.activityIdName.replace_strict(
-            textmap, default=None
-        ),
-        chapterTitle=pl.col.chapterTitle.replace_strict(textmap, default=None),
-        chapterNum=pl.col.chapterNum.replace_strict(textmap, default=None),
+        .otherwise(pl.col.talkRoleIdName.pipe(map_text, textmap)),
+        talkRoleName=pl.col.talkRoleName.pipe(map_text, textmap),
+        talkTitle=pl.col.talkTitle.pipe(map_text, textmap),
+        talkContent=pl.col.talkContent.pipe(map_text, textmap),
+        questIdName=pl.col.questIdName.pipe(map_text, textmap),
+        activityIdName=pl.col.activityIdName.pipe(map_text, textmap),
+        chapterTitle=pl.col.chapterTitle.pipe(map_text, textmap),
+        chapterNum=pl.col.chapterNum.pipe(map_text, textmap),
     )
 
 
 @app.cell
-def _(textmap):
+def _(loc):
+    def enhance_text(df: pl.DataFrame, lang: str) -> pl.DataFrame:
+        return df.with_columns(
+            talkRoleIdName=pl.when(pl.col.talkRoleType == "TALK_ROLE_PLAYER")
+            .then(pl.lit(loc["SPEAKER_TALK_ROLE_PLAYER"][lang]))
+            .when(pl.col.talkRoleType == "TALK_ROLE_MATE_AVATAR")
+            .then(pl.lit(loc["SPEAKER_TALK_ROLE_MATE_AVATAR"][lang]))
+            .otherwise(pl.col.talkRoleIdName.pipe(replace_term, loc, lang)),
+            talkRoleName=pl.col.talkRoleName.pipe(replace_term, loc, lang),
+            talkContent=pl.col.talkContent.str.replace_all(r"\\n", "\n")
+            .str.strip_chars()
+            .pipe(replace_term, loc, lang),
+            talkIdExpandable=(
+                (pl.col.talkId.is_not_null()) & (pl.len().over("talkId") > 1)
+            ),
+            questIdExpandable=(
+                (pl.col.questId.is_not_null()) & (pl.len().over("questId") > 1)
+            ),
+        ).with_columns(
+            talkRoleIdNameLower=pl.col.talkRoleIdName.str.to_lowercase(),
+            talkRoleNameLower=pl.col.talkRoleName.str.to_lowercase(),
+            talkTitleLower=pl.col.talkTitle.str.to_lowercase(),
+            talkContentLower=pl.col.talkContent.str.to_lowercase(),
+        )
+
+    return (enhance_text,)
+
+
+@app.cell
+def _(enhance_text, textmap):
     _input_path = Path("staging/talk0")
     _output_path = Path("staging/talk1")
     os.makedirs(_output_path, exist_ok=True)
     for _lang in LANGS:
         pl.read_parquet(_input_path / f"GI_Talk_{VERSION}.parquet").pipe(
             resolve_text, textmap[_lang]
-        ).write_parquet(_output_path / f"GI_Talk_{_lang}_{VERSION}.parquet")
-    return
-
-
-@app.cell
-def _():
-    # pronouns = (
-    #     pl.read_json(
-    #         DATA_PATH / "ExcelBinOutput/ManualTextMapConfigData.json",
-    #         schema={
-    #             "textMapId": pl.String,
-    #             "textMapContentTextMapHash": pl.String,
-    #         },
-    #     )
-    #     .filter(pl.col.textMapId.str.contains("PRONOUN", literal=True))
-    #     .with_columns(
-    #         pl.col.textMapContentTextMapHash.replace_strict(
-    #             textmap, default=None
-    #         ).drop_nulls()
-    #     ).to_dicts()
-    # )
-    # pronouns = {pronoun["textMapId"]: pronoun["textMapContentTextMapHash"] for pronoun in pronouns}
-    # pronouns
+        ).pipe(enhance_text, _lang).write_parquet(
+            _output_path / f"GI_Talk_{_lang}_{VERSION}.parquet"
+        )
     return
 
 

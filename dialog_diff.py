@@ -17,10 +17,14 @@ def condense_col(expr: pl.Expr) -> pl.Expr:
 
 
 for lang in LANGS:
-    old_df = pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{VERSION_OLD}.parquet")
-    new_df = pl.read_parquet(
-        INPUT_PATH / f"GI_Talk_{lang}_{VERSION}.parquet"
-    ).with_columns(new=~pl.col.id.is_in(old_df.get_column("id").unique().to_list()))
+    old_df = pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{VERSION_OLD}.parquet").drop(
+        r"^.*(Expandable|Lower)$"
+    )
+    new_df = (
+        pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{VERSION}.parquet")
+        .drop(r"^.*(Expandable|Lower)$")
+        .with_columns(new=~pl.col.id.is_in(old_df.get_column("id").unique().to_list()))
+    )
     old_in_new_df = new_df.filter(~pl.col.new).drop("new")
     new_in_new_df = new_df.filter(pl.col.new).drop("new")
 
@@ -57,14 +61,7 @@ for lang in LANGS:
     )
 
     role_df = (
-        new_in_new_df.with_columns(
-            talkRoleIdName=pl.when(
-                pl.col.talkRoleType.is_in(["TALK_ROLE_PLAYER", "TALK_ROLE_MATE_AVATAR"])
-            )
-            .then(pl.col.talkRoleType)
-            .otherwise(pl.col.talkRoleIdName)
-        )
-        .drop_nulls("talkRoleIdName")
+        new_in_new_df.drop_nulls("talkRoleIdName")
         .select("talkRoleIdName", "talkRoleName", "talkTitle", "type")
         .group_by("talkRoleIdName")
         .agg(

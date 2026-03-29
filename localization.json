@@ -1,0 +1,18 @@
+{
+  "SPEAKER_REALNAME_ID_1": {
+    "CHS": "流浪者",
+    "EN": "Wanderer"
+  },
+  "SPEAKER_REALNAME_ID_2": {
+    "CHS": "小家伙",
+    "EN": "Little Guy"
+  },
+  "SPEAKER_TALK_ROLE_MATE_AVATAR": {
+    "CHS": "反主",
+    "EN": "Twin"
+  },
+  "SPEAKER_TALK_ROLE_PLAYER": {
+    "CHS": "旅行者",
+    "EN": "Traveler"
+  }
+}
