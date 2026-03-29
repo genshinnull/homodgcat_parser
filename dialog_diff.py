@@ -11,8 +11,6 @@ OUTPUT_PATH = Path("product")
 
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
-cols = [VERSION_OLD, f"{VERSION}_old", f"{VERSION}_new"]
-
 
 def condense_col(expr: pl.Expr) -> pl.Expr:
     return expr.drop_nulls().unique().implode().list.sort().list.join(",")
@@ -32,7 +30,7 @@ for lang in LANGS:
             old_in_new_df.select(pl.len()),
             new_in_new_df.select(pl.len()),
         ]
-    ).transpose(column_names=cols)
+    ).transpose(column_names=[VERSION_OLD, f"{VERSION}_old", f"{VERSION}_new"])
 
     null_df = pl.concat(
         [
@@ -43,7 +41,19 @@ for lang in LANGS:
     ).transpose(
         include_header=True,
         header_name="field",
-        column_names=cols,
+        column_names=[VERSION_OLD, f"{VERSION}_old", f"{VERSION}_new"],
+    )
+
+    unique_df = pl.concat(
+        [
+            old_df.select(pl.all().n_unique()),
+            old_in_new_df.select(pl.all().n_unique()),
+            new_in_new_df.select(pl.all().n_unique()),
+        ]
+    ).transpose(
+        include_header=True,
+        header_name="field",
+        column_names=[VERSION_OLD, f"{VERSION}_old", f"{VERSION}_new"],
     )
 
     role_df = (
@@ -67,9 +77,7 @@ for lang in LANGS:
     )
 
     with (
-        open(
-            OUTPUT_PATH / f"GI_Talk_{lang}_Diff_Stats.md", "w"
-        ) as f,
+        open(OUTPUT_PATH / f"GI_Talk_{lang}_Diff_Stats.md", "w") as f,
         pl.Config(
             tbl_rows=-1,
             tbl_width_chars=-1,
@@ -83,13 +91,13 @@ for lang in LANGS:
             f"# {VERSION_OLD} - {VERSION} Dialogue Diff Report"
             + "\n\n## Total Line Counts\n\n"
             + str(len_df)
-            + "\n\n## Null Counts\n\n"
+            + "\n\n## Total Null Counts\n\n"
             + str(null_df)
-            + "\n\n## Speaker Line Counts\n\n"
+            + "\n\n## Total Unique Values\n\n"
+            + str(unique_df)
+            + "\n\n## New Line Counts by Speaker\n\n"
             + str(role_df)
             + "\n"
         )
 
-    new_df.write_parquet(
-        OUTPUT_PATH / f"GI_Talk_{lang}.parquet"
-    )
+    new_df.write_parquet(OUTPUT_PATH / f"GI_Talk_{lang}.parquet")
