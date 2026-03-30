@@ -12,19 +12,19 @@ OUTPUT_PATH = Path("product")
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 
+def slim(df: pl.DataFrame) -> pl.DataFrame:
+    return df.drop(r"^.*(Expandable|Lower)$")
+
+
 def condense_col(expr: pl.Expr) -> pl.Expr:
     return expr.drop_nulls().unique().implode().list.sort().list.join(",")
 
 
 for lang in LANGS:
-    old_df = pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{VERSION_OLD}.parquet").drop(
-        r"^.*(Expandable|Lower)$"
-    )
-    new_df = (
-        pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{VERSION}.parquet")
-        .drop(r"^.*(Expandable|Lower)$")
-        .with_columns(new=~pl.col.id.is_in(old_df.get_column("id").unique().to_list()))
-    )
+    old_df = pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{VERSION_OLD}.parquet")
+    new_df = pl.read_parquet(
+        INPUT_PATH / f"GI_Talk_{lang}_{VERSION}.parquet"
+    ).with_columns(new=~pl.col.id.is_in(old_df.get_column("id").unique().to_list()))
     old_in_new_df = new_df.filter(~pl.col.new).drop("new")
     new_in_new_df = new_df.filter(pl.col.new).drop("new")
 
@@ -38,9 +38,9 @@ for lang in LANGS:
 
     null_df = pl.concat(
         [
-            old_df.null_count(),
-            old_in_new_df.null_count(),
-            new_in_new_df.null_count(),
+            old_df.pipe(slim).null_count(),
+            old_in_new_df.pipe(slim).null_count(),
+            new_in_new_df.pipe(slim).null_count(),
         ]
     ).transpose(
         include_header=True,
@@ -50,9 +50,9 @@ for lang in LANGS:
 
     unique_df = pl.concat(
         [
-            old_df.select(pl.all().n_unique()),
-            old_in_new_df.select(pl.all().n_unique()),
-            new_in_new_df.select(pl.all().n_unique()),
+            old_df.pipe(slim).select(pl.all().n_unique()),
+            old_in_new_df.pipe(slim).select(pl.all().n_unique()),
+            new_in_new_df.pipe(slim).select(pl.all().n_unique()),
         ]
     ).transpose(
         include_header=True,

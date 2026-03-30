@@ -54,7 +54,7 @@ def map_text(expr: pl.Expr, textmap: dict[str, str]) -> pl.Expr:
 def resolve_text(
     df: pl.DataFrame,
     textmap: dict[str, str],
-) -> pl.DataFrame:
+):
     return df.with_columns(
         talkRoleIdName=pl.when(pl.col.talkRoleId.str.contains(r"\D"))
         .then("talkRoleId")
@@ -71,7 +71,7 @@ def resolve_text(
 
 @app.cell
 def _(locs, pros):
-    def enhance_text(df: pl.DataFrame, lang: str) -> pl.DataFrame:
+    def enhance_text(df: pl.DataFrame, lang: str):
         return df.with_columns(
             talkRoleIdName=pl.when(pl.col.talkRoleType == "TALK_ROLE_PLAYER")
             .then(pl.lit(locs["SPEAKER_TALK_ROLE_PLAYER"][lang]))
@@ -106,9 +106,9 @@ def _(enhance_text, textmap):
     _output_path = Path("staging/talk1")
     os.makedirs(_output_path, exist_ok=True)
     for _lang in LANGS:
-        pl.read_parquet(_input_path / f"GI_Talk_{VERSION}.parquet").pipe(
+        pl.scan_parquet(_input_path / f"GI_Talk_{VERSION}.parquet").pipe(
             resolve_text, textmap[_lang]
-        ).pipe(enhance_text, _lang).write_parquet(
+        ).pipe(enhance_text, _lang).sink_parquet(
             _output_path / f"GI_Talk_{_lang}_{VERSION}.parquet"
         )
     return
