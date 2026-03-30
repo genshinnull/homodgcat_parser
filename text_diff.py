@@ -60,16 +60,6 @@ for lang in LANGS:
             + "\n"
         )
 
-    new_df.select(
-        "type",
-        "key",
-        "value",
-        "paged",
-        "book",
-        "letter",
-        "k_from",
-        "v_from",
-        "kv_from",
-    ).sort("value", "type", "key").write_parquet(
+    new_df.drop("version").sort("value", "type", "key").write_parquet(
         OUTPUT_PATH / f"GI_Text_{lang}.parquet"
     )

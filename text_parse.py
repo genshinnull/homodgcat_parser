@@ -83,7 +83,7 @@ def extract_readable(ver: str, lang: str, dir: Path) -> pl.DataFrame:
             data.append(
                 {
                     "key": file.stem.split(f"_{lang}")[0],
-                    "value": f.read().strip(),
+                    "value": f.read(),
                 }
             )
     return (
