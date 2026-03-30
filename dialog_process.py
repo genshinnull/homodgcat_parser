@@ -11,7 +11,7 @@ with app.setup:
     import orjson
     import polars as pl
 
-    from utils import get_textmap, replace_term
+    from utils import get_pronouns, get_textmap, replace_terms
 
     DATA_PATH = Path(os.environ["DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
@@ -27,16 +27,22 @@ def _():
 @app.cell
 def _():
     with open("localization.json") as _f:
-        loc = orjson.loads(_f.read())
-    return (loc,)
+        locs = orjson.loads(_f.read())
+    return (locs,)
 
 
 @app.cell
 def _():
     textmap = {}
+    pros = {}
     for _lang in LANGS:
         textmap[_lang] = get_textmap(DATA_PATH / "TextMap", _lang)
-    return (textmap,)
+        pros[_lang] = get_pronouns(
+            DATA_PATH / "ExcelBinOutput/ManualTextMapConfigData.json",
+            _lang,
+            textmap[_lang],
+        )
+    return pros, textmap
 
 
 @app.function
@@ -64,18 +70,20 @@ def resolve_text(
 
 
 @app.cell
-def _(loc):
+def _(locs, pros):
     def enhance_text(df: pl.DataFrame, lang: str) -> pl.DataFrame:
         return df.with_columns(
             talkRoleIdName=pl.when(pl.col.talkRoleType == "TALK_ROLE_PLAYER")
-            .then(pl.lit(loc["SPEAKER_TALK_ROLE_PLAYER"][lang]))
+            .then(pl.lit(locs["SPEAKER_TALK_ROLE_PLAYER"][lang]))
             .when(pl.col.talkRoleType == "TALK_ROLE_MATE_AVATAR")
-            .then(pl.lit(loc["SPEAKER_TALK_ROLE_MATE_AVATAR"][lang]))
-            .otherwise(pl.col.talkRoleIdName.pipe(replace_term, loc, lang)),
-            talkRoleName=pl.col.talkRoleName.pipe(replace_term, loc, lang),
+            .then(pl.lit(locs["SPEAKER_TALK_ROLE_MATE_AVATAR"][lang]))
+            .otherwise(
+                pl.col.talkRoleIdName.pipe(replace_terms, locs, pros, lang)
+            ),
+            talkRoleName=pl.col.talkRoleName.pipe(replace_terms, locs, pros, lang),
             talkContent=pl.col.talkContent.str.replace_all(r"\\n", "\n")
             .str.strip_chars()
-            .pipe(replace_term, loc, lang),
+            .pipe(replace_terms, locs, pros, lang),
             talkIdExpandable=(
                 (pl.col.talkId.is_not_null()) & (pl.len().over("talkId") > 1)
             ),

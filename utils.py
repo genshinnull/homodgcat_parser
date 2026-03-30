@@ -18,7 +18,32 @@ def get_textmap(
     return textmap
 
 
-def replace_term(expr: pl.Expr, localization: dict, lang: str) -> pl.Expr:
+def get_pronouns(path: Path, lang: str, textmap: dict[str, str]) -> dict[str, str]:
+    pronouns = (
+        pl.read_json(
+            path,
+            schema={
+                "textMapId": pl.String,
+                "textMapContentTextMapHash": pl.String,
+            },
+        )
+        .filter(pl.col.textMapId.str.contains("PRONOUN", literal=True))
+        .with_columns(
+            pl.col.textMapContentTextMapHash.replace_strict(
+                textmap, default=None
+            ).drop_nulls()
+        )
+        .to_dicts()
+    )
+    return {
+        pronoun["textMapId"]: pronoun["textMapContentTextMapHash"]
+        for pronoun in pronouns
+    }
+
+
+def replace_terms(
+    expr: pl.Expr, localization: dict, pronouns: dict[str, str], lang: str
+) -> pl.Expr:
     return (
         pl.when(expr.str.contains(r"(?s)^#.*\{"))
         .then(
@@ -34,25 +59,7 @@ def replace_term(expr: pl.Expr, localization: dict, lang: str) -> pl.Expr:
             .str.replace_all(
                 r"\{NICKNAME\}", localization["SPEAKER_TALK_ROLE_PLAYER"][lang]
             )
+            .str.replace_many(pronouns[lang])
         )
         .otherwise(expr)
     )
-
-
-# pronouns = (
-#     pl.read_json(
-#         DATA_PATH / "ExcelBinOutput/ManualTextMapConfigData.json",
-#         schema={
-#             "textMapId": pl.String,
-#             "textMapContentTextMapHash": pl.String,
-#         },
-#     )
-#     .filter(pl.col.textMapId.str.contains("PRONOUN", literal=True))
-#     .with_columns(
-#         pl.col.textMapContentTextMapHash.replace_strict(
-#             textmap, default=None
-#         ).drop_nulls()
-#     ).to_dicts()
-# )
-# pronouns = {pronoun["textMapId"]: pronoun["textMapContentTextMapHash"] for pronoun in pronouns}
-# pronouns
