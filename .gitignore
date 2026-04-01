@@ -19,6 +19,7 @@ venv.bak/
 # Ruff stuff:
 .ruff_cache/
 
+product/
 product/**
 staging/**
 translation/**
