@@ -41,6 +41,14 @@ def get_pronouns(path: Path, lang: str, textmap: dict[str, str]) -> dict[str, st
     }
 
 
+def process_whitespace(expr: pl.Expr) -> pl.Expr:
+    return expr.str.replace_all("\\n", "\n", literal=True).str.strip_chars()
+
+
+def remove_tags(expr: pl.Expr) -> pl.Expr:
+    return expr.str.replace_all(r"<.*?>", "")
+
+
 def replace_terms(
     expr: pl.Expr, localization: dict, pronouns: dict[str, str], lang: str
 ) -> pl.Expr:

@@ -11,7 +11,13 @@ with app.setup:
     import orjson
     import polars as pl
 
-    from utils import get_pronouns, get_textmap, replace_terms
+    from utils import (
+        get_pronouns,
+        get_textmap,
+        process_whitespace,
+        remove_tags,
+        replace_terms,
+    )
 
     DATA_PATH = Path(os.environ["DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
@@ -51,8 +57,8 @@ def _():
 def _(locs, pros):
     def enhance_text(df: pl.DataFrame, lang: str):
         return df.with_columns(
-            pl.col.value.str.replace_all(r"\\n", "\n")
-            .str.strip_chars()
+            pl.col.value.pipe(process_whitespace)
+            .pipe(remove_tags)
             .pipe(replace_terms, locs, pros, lang),
         ).with_columns(
             keyLower=pl.col.key.str.to_lowercase(),

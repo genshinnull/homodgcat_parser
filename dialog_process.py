@@ -11,11 +11,19 @@ with app.setup:
     import orjson
     import polars as pl
 
-    from utils import get_pronouns, get_textmap, replace_terms
+    from utils import (
+        get_pronouns,
+        get_textmap,
+        process_whitespace,
+        remove_tags,
+        replace_terms,
+    )
 
     DATA_PATH = Path(os.environ["DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
     VERSION = os.environ["VERSION"]
+    INPUT_PATH = Path("staging/talk0")
+    OUTPUT_PATH = Path("staging/talk1")
 
 
 @app.cell
@@ -81,8 +89,8 @@ def _(locs, pros):
                 pl.col.talkRoleIdName.pipe(replace_terms, locs, pros, lang)
             ),
             talkRoleName=pl.col.talkRoleName.pipe(replace_terms, locs, pros, lang),
-            talkContent=pl.col.talkContent.str.replace_all(r"\\n", "\n")
-            .str.strip_chars()
+            talkContent=pl.col.talkContent.pipe(process_whitespace)
+            .pipe(remove_tags)
             .pipe(replace_terms, locs, pros, lang),
             talkIdExpandable=(
                 (pl.col.talkId.is_not_null()) & (pl.len().over("talkId") > 1)
@@ -102,14 +110,12 @@ def _(locs, pros):
 
 @app.cell
 def _(enhance_text, textmap):
-    _input_path = Path("staging/talk0")
-    _output_path = Path("staging/talk1")
-    os.makedirs(_output_path, exist_ok=True)
+    os.makedirs(OUTPUT_PATH, exist_ok=True)
     for _lang in LANGS:
-        pl.scan_parquet(_input_path / f"GI_Talk_{VERSION}.parquet").pipe(
+        pl.scan_parquet(INPUT_PATH / f"GI_Talk_{VERSION}.parquet").pipe(
             resolve_text, textmap[_lang]
         ).pipe(enhance_text, _lang).sink_parquet(
-            _output_path / f"GI_Talk_{_lang}_{VERSION}.parquet"
+            OUTPUT_PATH / f"GI_Talk_{_lang}_{VERSION}.parquet"
         )
     return
 
