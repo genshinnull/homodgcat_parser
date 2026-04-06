@@ -236,6 +236,32 @@ def _():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
+    ## TalkExcelConfigData
+    """)
+    return
+
+
+@app.cell
+def _():
+    _talk_excel_data = []
+    for _f in DATA_PATH.glob("ExcelBinOutput/TalkExcelConfigData_*.json"):
+        _talk_excel_data.append(
+            pl.read_json(
+                str(_f),
+                schema={
+                    "id": pl.Int64,
+                    "questId": pl.Int64,
+                },
+            )
+        )
+    talk_excel_df = pl.concat(_talk_excel_data).rename({"id": "talkId"})
+    talk_excel_df
+    return (talk_excel_df,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     ## BinOutput/Talk & BinOutput/Quest
     """)
     return
@@ -577,7 +603,13 @@ def _():
 
 
 @app.cell
-def _(gadget_grp_df, npc_grp_df, quest_talk_df, storyboard_grp_df):
+def _(
+    gadget_grp_df,
+    npc_grp_df,
+    quest_talk_df,
+    storyboard_grp_df,
+    talk_excel_df,
+):
     _subset = ["talkId", "questId"]
     quest_id_df = (
         pl.concat(
@@ -586,6 +618,7 @@ def _(gadget_grp_df, npc_grp_df, quest_talk_df, storyboard_grp_df):
                 gadget_grp_df.select(_subset),
                 npc_grp_df.select(_subset),
                 storyboard_grp_df.select(_subset),
+                talk_excel_df.select(_subset),
             ]
         )
         .with_columns(questId=pl.col.questId.replace({0: None}))
