@@ -24,19 +24,27 @@ for lang in LANGS:
         .sort("type")
     )
 
-    readable_df = new_df.filter(
-        pl.col.type == "Readable",
-        ~pl.col.key.is_in(
-            old_df.filter(pl.col.type == "Readable").get_column("key").to_list()
-        ),
-    ).select("key", "paged", "book", "letter")
+    readable_df = (
+        new_df.filter(
+            pl.col.type == "Readable",
+            ~pl.col.key.is_in(
+                old_df.filter(pl.col.type == "Readable").get_column("key").to_list()
+            ),
+        )
+        .select("key", "paged", "book", "letter")
+        .sort("key")
+    )
 
-    subtitle_df = new_df.filter(
-        pl.col.type == "Subtitle",
-        ~pl.col.key.is_in(
-            old_df.filter(pl.col.type == "Subtitle").get_column("key").to_list()
-        ),
-    ).select("key")
+    subtitle_df = (
+        new_df.filter(
+            pl.col.type == "Subtitle",
+            ~pl.col.key.is_in(
+                old_df.filter(pl.col.type == "Subtitle").get_column("key").to_list()
+            ),
+        )
+        .select("key")
+        .sort("key")
+    )
 
     with (
         open(OUTPUT_PATH / f"GI_Text_{lang}_Diff_Stats.md", "w") as f,
