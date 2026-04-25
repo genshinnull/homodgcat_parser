@@ -42,7 +42,7 @@ def _():
 
 @app.cell
 def _(Path, os):
-    DATA_PATH = Path(os.environ["DATA_PATH"])
+    DATA_PATH = Path(os.environ["REF_DATA_PATH"])
     VERSION = Path(os.environ["VERSION"])
     DATA_PATH, VERSION
     return DATA_PATH, VERSION

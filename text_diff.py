@@ -8,6 +8,7 @@ VERSION_OLD = os.environ["VERSION_OLD"]
 LANGS = os.environ["LANGS"].split(",")
 INPUT_PATH = Path("staging/text1")
 OUTPUT_PATH = Path("product")
+BETA = os.environ.get("BETA", False)
 
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
@@ -47,7 +48,15 @@ for lang in LANGS:
     )
 
     with (
-        open(OUTPUT_PATH / f"GI_Text_{lang}_Diff_Stats.md", "w") as f,
+        open(
+            OUTPUT_PATH
+            / (
+                f"GI_Text_Beta_{lang}_Diff_Stats.md"
+                if BETA
+                else f"GI_Text_{lang}_Diff_Stats.md"
+            ),
+            "w",
+        ) as f,
         pl.Config(
             tbl_rows=-1,
             tbl_width_chars=-1,
@@ -69,5 +78,6 @@ for lang in LANGS:
         )
 
     new_df.drop("version").sort("value", "type", "key").write_parquet(
-        OUTPUT_PATH / f"GI_Text_{lang}.parquet"
+        OUTPUT_PATH
+        / (f"GI_Text_Beta_{lang}.parquet" if BETA else f"GI_Text_{lang}.parquet")
     )

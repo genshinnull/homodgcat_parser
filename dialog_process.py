@@ -19,7 +19,7 @@ with app.setup:
         replace_terms,
     )
 
-    DATA_PATH = Path(os.environ["DATA_PATH"])
+    DATA_PATH = Path(os.environ["REF_DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
     VERSION = os.environ["VERSION"]
     INPUT_PATH = Path("staging/talk0")

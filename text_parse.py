@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.21.1"
+__generated_with = "0.23.1"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -15,8 +15,7 @@ with app.setup:
 
     from utils import get_textmap
 
-    DATA_PATH = Path(os.environ["DATA_PATH"])
-    CBT3_DATA_PATH = Path(os.environ["CBT3_DATA_PATH"])
+    DATA_PATH = Path(os.environ["REF_DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
     VERSION = os.environ["VERSION"]
 
@@ -39,7 +38,7 @@ def _():
 
 @app.cell
 def _():
-    DATA_PATH, CBT3_DATA_PATH, LANGS, VERSION
+    DATA_PATH, LANGS, VERSION
     return
 
 
@@ -138,11 +137,7 @@ def _(versions):
     ) as _bar:
         for _ver in versions:
             _bar.subtitle = f"Working on Version {_ver['ver']}"
-            match _ver["type"]:
-                case "REL":
-                    _path = DATA_PATH
-                case "CBT3":
-                    _path = CBT3_DATA_PATH
+            _path = Path(os.environ[_ver["path"]])
             if _ver.get("hash"):
                 _repo = Repo(_path)
                 assert not _repo.is_dirty()
@@ -221,7 +216,7 @@ def _():
             )
             .rename({"questIDList": "id"})
             .select(
-                pl.col.documentType,
+                pl.col.documentType.fill_null("Book"),
                 pl.col.id,
                 pl.col.titleTextMapHash,
             )

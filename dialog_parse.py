@@ -17,7 +17,7 @@ with app.setup:
         ValidationError,
     )
 
-    DATA_PATH = Path(os.environ["DATA_PATH"])
+    DATA_PATH = Path(os.environ["REF_DATA_PATH"])
     VERSION = os.environ["VERSION"]
 
 

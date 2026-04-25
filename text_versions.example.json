@@ -1,226 +1,226 @@
 [
   {
     "ver": "0.9",
-    "type": "CBT3"
+    "path": "CBT3_DATA_PATH"
   },
   {
     "ver": "1.4",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "86c28c0a59526cad72d5ec6548a0d6b3a9413826"
   },
   {
     "ver": "1.5",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "5ee08c0771f257ac06f37293973e6bf42302fa76"
   },
   {
     "ver": "1.6",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "9eeb6591fa5de850a0486fa6c2691e1f468d3d91"
   },
   {
     "ver": "2.0",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "97ec5bf557d7dd301beac19ab72cdf4edf9def0a"
   },
   {
     "ver": "2.1",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "23e4d9800ee43bfc21f16a7441af18b6acf59f68"
   },
   {
     "ver": "2.2",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "a92b5842daa911c095f47ef235b2bcd4b388d65a"
   },
   {
     "ver": "2.3",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "3d39b3502bdcec8d936f82f32ecc36f65eaba2b2"
   },
   {
     "ver": "2.4",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "27a2ca1cb72393e3b4a8420e830912f7704d4fff"
   },
   {
     "ver": "2.5",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "f6b76a7c958c121e43d4612d7d54e327066d2e73"
   },
   {
     "ver": "2.6",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "ecb5c64aa4fcba4ed83f69bee28103770061c189"
   },
   {
     "ver": "2.7",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "ebb117f78dab56e704853b71fa60f45ee2cefe79"
   },
   {
     "ver": "2.8",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "d56ed231c4513963d27051dd6f7828f0e06c2588"
   },
   {
     "ver": "3.0",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "45c509efd76550b17e394774fd90bec248ccefdb"
   },
   {
     "ver": "3.1",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "4c5e4f6889ee820be814c71e663bf19c2bf2275d"
   },
   {
     "ver": "3.2",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "e7c944395d00f0dc1848a66703c73d9763dfc5cc"
   },
   {
     "ver": "3.3",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "1a6597f5a67382119494beae22a4039a1cefc8e1"
   },
   {
     "ver": "3.4",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "28662783890fd9c3a16404e1971d37a23a7045ca"
   },
   {
     "ver": "3.5",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "410cafbc9ba35274b96a44f7b9e9c85be43a2334"
   },
   {
     "ver": "3.6",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "9aa4937b7dddc506677617150e29803004fee964"
   },
   {
     "ver": "3.7",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "23109cab0def51d4b598a91b33a1f642a83d0359"
   },
   {
     "ver": "3.8",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "6b5b54aa48e0158350cd82d0732d1667140dd860"
   },
   {
     "ver": "4.0",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "4f872fefab5ed8c6c6b72899e47bcb0344416a4f"
   },
   {
     "ver": "4.2",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "d2a73df4ff40bd9e666f86773012a5f52b548b0f"
   },
   {
     "ver": "4.3",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "ecce481664b72fa2ea1d141ed7d6d08acb80d63b"
   },
   {
     "ver": "4.4",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "61eaba93568a69466951b1c2bc5efe2157963bdc"
   },
   {
     "ver": "4.5",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "8c43a454992c4e339bf0b79b74cd081f8e8a2cca"
   },
   {
     "ver": "4.6",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "85c2f9e54ced5df20e50065abc3db73d0d07ce87"
   },
   {
     "ver": "4.7",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "c4775ae8295fa55703af9d6cd42ad39acadd508c"
   },
   {
     "ver": "4.8",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "411376ae92931a04d41ae5a9386d45c0d2deb8a8"
   },
   {
     "ver": "5.0",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "f90e7b375ea9a6441952c49a672f868028a9f92d"
   },
   {
     "ver": "5.1",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "92931454c0f7a703c64a1e3baec83571753bc0eb"
   },
   {
     "ver": "5.2",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "3847f0fc6e3119b87767508ac7471dff6a7b51d0"
   },
   {
     "ver": "5.3",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "51f5e2eaab4c1a7f4692ac3454122b28024ec62c"
   },
   {
     "ver": "5.4",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "dee14cc45e977782e1e93be9d3ed4b0d12e90e5a"
   },
   {
     "ver": "5.5",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "0077f79f1676bad3b121017fe2098bedbe284712"
   },
   {
     "ver": "5.6",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "cb46dc84d8897b49fbfbe944035fac5abc520f6f"
   },
   {
     "ver": "5.7",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "de661bd09b262ce320f78a03bc0adc437f8729a3"
   },
   {
     "ver": "5.8",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "13be4fd7343fe4cee8fa0096fe854b1c5b01b124"
   },
   {
     "ver": "6.0",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "4f9f22c8842a9e840baa51ff579b26dd248079ba"
   },
   {
     "ver": "6.1",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "f83066c8c20ced632c6fb07d8a4fb0ab8fbb4192"
   },
   {
     "ver": "6.2",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "2f0f85f19885ee632d9eab37226c9e60d8f1216f"
   },
   {
     "ver": "6.3",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "fe7c8592b2fd1cd3f285de5039285c99e641a5e1"
   },
   {
     "ver": "6.4",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "b761e4d2e9e509eb8aa8c04c381b46d2308d7e85"
   },
   {
     "ver": "6.5",
-    "type": "REL",
+    "path": "REL_DATA_PATH",
     "hash": "f9a21406731cd33242defd88dfc2aa06674ab353"
   }
 ]
