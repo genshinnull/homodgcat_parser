@@ -129,14 +129,41 @@ def extract_subtitle(ver: str, lang: str, dir: Path) -> pl.DataFrame:
 
 @app.cell
 def _(versions):
-    text_data = {lang: [] for lang in LANGS}
+    _watch_path = Path("staging/text0")
+    actual_versions = []
+    _skipped_versions = []
+    for _ver in versions:
+        if all(
+            [
+                (
+                    _watch_path
+                    / f"GI_Text_{lang}_Single_{_ver['ver'].replace('.', '_')}.parquet"
+                ).exists()
+                for lang in LANGS
+            ]
+        ):
+            _skipped_versions.append(_ver["ver"])
+        else:
+            actual_versions.append(_ver)
+
+    (
+        str(sorted(_skipped_versions, reverse=True)),
+        str([_ver["ver"] for _ver in actual_versions]),
+    )
+    return (actual_versions,)
+
+
+@app.cell
+def _(actual_versions):
+    mo.stop(not actual_versions)
+    text_data = {lang: {} for lang in LANGS}
     with mo.status.progress_bar(
-        total=len(versions),
+        total=len(actual_versions),
         remove_on_exit=True,
         title="Extracting...",
+        subtitle=f"Working on Version {actual_versions[0]['ver']}",
     ) as _bar:
-        for _ver in versions:
-            _bar.subtitle = f"Working on Version {_ver['ver']}"
+        for _i, _ver in enumerate(actual_versions):
             _path = Path(os.environ[_ver["path"]])
             if _ver.get("hash"):
                 _repo = Repo(_path)
@@ -148,6 +175,7 @@ def _(versions):
                 ]:
                     _repo.git.restore("--source", _ver["hash"], _dir)
             for _lang in LANGS:
+                text_data[_lang][_ver["ver"]] = []
                 for _data_df in [
                     extract_textmap(_ver["ver"], _lang, _path / "TextMap"),
                     extract_readable(
@@ -158,12 +186,18 @@ def _(versions):
                     ),
                 ]:
                     if not _data_df.is_empty():
-                        text_data[_lang].append(_data_df)
+                        text_data[_lang][_ver["ver"]].append(_data_df)
+                text_data[_lang][_ver["ver"]] = (
+                    pl.concat(text_data[_lang][_ver["ver"]])
+                    if text_data[_lang][_ver["ver"]]
+                    else pl.DataFrame()
+                )
             if _ver.get("hash"):
                 _repo.git.clean("-fd")
                 _repo.git.reset("HEAD", "--hard")
-            _bar.update()
-    text_data = {lang: pl.concat(data) for lang, data in text_data.items()}
+            _bar.update(
+                subtitle=f"Working on Version {actual_versions[min(_i + 1, len(actual_versions) - 1)]['ver']}"
+            )
     {lang: len(data) for lang, data in text_data.items()}
     return (text_data,)
 
@@ -244,14 +278,13 @@ def _():
 
 
 @app.cell
-def _(document_df, localization_df, text_data):
-    text_data_transformed = {}
+def _(actual_versions, document_df, localization_df, text_data):
+    mo.stop(not actual_versions)
+    text_data_transformed = {lang: {} for lang in LANGS}
     for _lang in LANGS:
         _tm_df = (
-            text_data[_lang]
-            .filter(
-                pl.col.type == "TextMap", pl.col.version == pl.col.version.max()
-            )
+            list(text_data[_lang].values())[-1]
+            .filter(pl.col.type == "TextMap")
             .select("key", "value")
         )
         _readable_df = document_df.join(
@@ -274,9 +307,10 @@ def _(document_df, localization_df, text_data):
                 default=None,
             ),
         )
-        text_data_transformed[_lang] = text_data[_lang].join(
-            _readable_df, on="key", how="left"
-        )
+        for _ver, _text_df in text_data[_lang].items():
+            text_data_transformed[_lang][_ver] = _text_df.join(
+                _readable_df, on="key", how="left"
+            )
     {lang: len(data) for lang, data in text_data_transformed.items()}
     return (text_data_transformed,)
 
@@ -290,13 +324,16 @@ def _():
 
 
 @app.cell
-def _(text_data_transformed):
+def _(actual_versions, text_data_transformed):
+    mo.stop(not actual_versions)
     _output_path = Path("staging/text0")
     os.makedirs(_output_path, exist_ok=True)
-    for _lang in LANGS:
-        text_data_transformed[_lang].sort(
-            "value", "type", "key", "version"
-        ).write_parquet(_output_path / f"GI_Text_{_lang}_{VERSION}.parquet")
+    for _lang, _data in text_data_transformed.items():
+        for _ver, _df in _data.items():
+            _df.sort("value", "type", "key").write_parquet(
+                _output_path
+                / f"GI_Text_{_lang}_Single_{_ver.replace('.', '_')}.parquet"
+            )
     return
 
 

@@ -88,10 +88,13 @@ def _(enhance_text):
     _cols = ["value", "type", "key", "version"]
     os.makedirs(OUTPUT_PATH, exist_ok=True)
     for _lang in LANGS:
-        pl.scan_parquet(INTPUT_PATH / f"GI_Text_{_lang}_{VERSION}.parquet").pipe(
-            enhance_text, _lang
-        ).pipe(track_kv).sort("value", "type", "key", "version").sink_parquet(
-            OUTPUT_PATH / f"GI_Text_{_lang}_{VERSION}.parquet"
+        (
+            pl.scan_parquet(str(INTPUT_PATH / f"GI_Text_{_lang}_Single_*.parquet"))
+            .filter(pl.col.version <= VERSION.replace("_", "."))
+            .pipe(enhance_text, _lang)
+            .pipe(track_kv)
+            .sort("value", "type", "key", "version")
+            .sink_parquet(OUTPUT_PATH / f"GI_Text_{_lang}_{VERSION}.parquet")
         )
     return
 
