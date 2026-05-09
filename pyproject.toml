@@ -4,18 +4,16 @@ version = "0.0.0"
 description = ""
 requires-python = ">=3.14"
 dependencies = [
-    "gitpython>=3.1.46",
-    "marimo>=0.20.2",
-    "orjson>=3.11.7",
-    "polars>=1.38.1",
-    "pydantic>=2.12.5",
-    "pysubs2>=1.8.0",
+    "gitpython",
+    "marimo",
+    "orjson",
+    "polars",
+    "pydantic",
+    "pysubs2",
 ]
 
 [dependency-groups]
 dev = [
-    "httpx[socks]>=0.28.1",
-    "marimo[mcp]>=0.20.4",
-    "ruff>=0.15.2",
-    "ty>=0.0.18",
+    "marimo[recommended,lsp,mcp]",
+    "ty",
 ]
