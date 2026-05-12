@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.23.3"
+__generated_with = "0.23.5"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -21,7 +21,8 @@ with app.setup:
 
     DATA_PATH = Path(os.environ["REF_DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
-    VERSION = os.environ["VERSION"]
+    VERSION = os.environ["TEXT_VERSION"]
+    version = VERSION.replace(".", "_")
     INTPUT_PATH = Path("staging/text0")
     OUTPUT_PATH = Path("staging/text1")
 
@@ -75,7 +76,6 @@ def _(locs, pros):
 def track_kv(df: pl.DataFrame):
     return df.sort("version", "value", "type", "key").with_columns(
         pl.col.version.first().over("key").alias("k_from"),
-        pl.col.version.last().over("key").alias("k_to"),
         pl.col.version.first().over("value").alias("v_from"),
         pl.col.version.last().over("value").alias("v_to"),
         pl.col.version.first().over("key", "value").alias("kv_from"),
@@ -86,15 +86,15 @@ def track_kv(df: pl.DataFrame):
 @app.cell
 def _(enhance_text):
     _cols = ["value", "type", "key", "version"]
-    os.makedirs(OUTPUT_PATH, exist_ok=True)
+    OUTPUT_PATH.mkdir(exist_ok=True)
     for _lang in LANGS:
         (
             pl.scan_parquet(str(INTPUT_PATH / f"GI_Text_{_lang}_Single_*.parquet"))
-            .filter(pl.col.version <= VERSION.replace("_", "."))
+            .filter(pl.col.version <= VERSION)
             .pipe(enhance_text, _lang)
             .pipe(track_kv)
             .sort("value", "type", "key", "version")
-            .sink_parquet(OUTPUT_PATH / f"GI_Text_{_lang}_{VERSION}.parquet")
+            .sink_parquet(OUTPUT_PATH / f"GI_Text_{_lang}_{version}.parquet")
         )
     return
 

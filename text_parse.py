@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.23.3"
+__generated_with = "0.23.5"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -17,7 +17,6 @@ with app.setup:
 
     DATA_PATH = Path(os.environ["REF_DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
-    VERSION = os.environ["VERSION"]
 
 
 @app.cell(hide_code=True)
@@ -38,7 +37,7 @@ def _():
 
 @app.cell
 def _():
-    DATA_PATH, LANGS, VERSION
+    DATA_PATH, LANGS
     return
 
 
@@ -327,7 +326,7 @@ def _():
 def _(actual_versions, text_data_transformed):
     mo.stop(not actual_versions)
     _output_path = Path("staging/text0")
-    os.makedirs(_output_path, exist_ok=True)
+    _output_path.mkdir(exist_ok=True)
     for _lang, _data in text_data_transformed.items():
         for _ver, _df in _data.items():
             _df.sort("value", "type", "key").write_parquet(

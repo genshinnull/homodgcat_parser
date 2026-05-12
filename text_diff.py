@@ -3,24 +3,24 @@ from pathlib import Path
 
 import polars as pl
 
-VERSION = os.environ["VERSION"]
-VERSION_OLD = os.environ["VERSION_OLD"]
+VERSION = os.environ["TEXT_VERSION"]
+OLD_VERSION = os.environ["TEXT_OLD_VERSION"]
 LANGS = os.environ["LANGS"].split(",")
 INPUT_PATH = Path("staging/text1")
 OUTPUT_PATH = Path("product")
-BETA = os.environ.get("BETA", False)
 
-os.makedirs(OUTPUT_PATH, exist_ok=True)
+OUTPUT_PATH.mkdir(exist_ok=True)
 
 for lang in LANGS:
-    df = pl.read_parquet(INPUT_PATH / f"GI_Text_{lang}_{VERSION}.parquet")
-    versions = df.get_column("version").unique().sort().to_list()
-    old_df = df.filter(pl.col.version == versions[-2])
-    new_df = df.filter(pl.col.version == versions[-1])
+    df = pl.read_parquet(
+        INPUT_PATH / f"GI_Text_{lang}_{VERSION.replace('.', '_')}.parquet"
+    )
+    old_df = df.filter(pl.col.version == OLD_VERSION)
+    new_df = df.filter(pl.col.version == VERSION)
 
     len_df = (
         old_df.group_by("type")
-        .len(name=VERSION_OLD)
+        .len(name=OLD_VERSION)
         .join(new_df.group_by("type").len(name=VERSION), on="type")
         .sort("type")
     )
@@ -48,15 +48,7 @@ for lang in LANGS:
     )
 
     with (
-        open(
-            OUTPUT_PATH
-            / (
-                f"GI_Text_Beta_{lang}_Diff_Stats.md"
-                if BETA
-                else f"GI_Text_{lang}_Diff_Stats.md"
-            ),
-            "w",
-        ) as f,
+        open(OUTPUT_PATH / f"GI_Text_{lang}_Diff_Stats.md", "w") as f,
         pl.Config(
             tbl_rows=-1,
             tbl_width_chars=-1,
@@ -67,7 +59,7 @@ for lang in LANGS:
         ),
     ):
         f.write(
-            f"# {VERSION_OLD} - {VERSION} Text Diff Report"
+            f"# {OLD_VERSION} - {VERSION} Text Diff Report"
             + "\n\n## Total Entry Counts\n\n"
             + str(len_df)
             + "\n\n## New Readable Entries\n\n"
@@ -77,7 +69,6 @@ for lang in LANGS:
             + "\n"
         )
 
-    new_df.drop("version").sort("value", "type", "key").write_parquet(
-        OUTPUT_PATH
-        / (f"GI_Text_Beta_{lang}.parquet" if BETA else f"GI_Text_{lang}.parquet")
+    df.drop("version").unique().sort("value", "type", "key").write_parquet(
+        OUTPUT_PATH / f"GI_Text_{lang}.parquet"
     )

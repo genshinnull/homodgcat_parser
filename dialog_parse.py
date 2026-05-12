@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.23.3"
+__generated_with = "0.23.5"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -17,8 +17,9 @@ with app.setup:
         ValidationError,
     )
 
-    DATA_PATH = Path(os.environ["REF_DATA_PATH"])
-    VERSION = os.environ["VERSION"]
+    DATA_PATH = Path(os.environ["TALK_DATA_PATH"])
+    VERSION = os.environ["TALK_VERSION"]
+    version = VERSION.replace(".", "_")
 
 
 @app.cell(hide_code=True)
@@ -58,7 +59,7 @@ def load_file(
 @app.cell
 def _():
     translation = tuple(
-        pl.read_csv(Path(f"translation/{VERSION}.csv")).iter_rows()
+        pl.read_csv(Path(f"translation/{version}.csv")).iter_rows()
     )
     translation
     return (translation,)
@@ -863,9 +864,9 @@ def _():
 @app.cell
 def _(dialog_final_df):
     _output_path = Path("staging/talk0")
-    os.makedirs(_output_path, exist_ok=True)
+    _output_path.mkdir(exist_ok=True)
     dialog_final_df.write_parquet(
-        Path(_output_path / f"GI_Talk_{VERSION}.parquet")
+        Path(_output_path / f"GI_Talk_{version}.parquet")
     )
     return
 

@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.23.3"
+__generated_with = "0.23.5"
 app = marimo.App(width="medium")
 
 
@@ -42,10 +42,11 @@ def _():
 
 @app.cell
 def _(Path, os):
-    DATA_PATH = Path(os.environ["REF_DATA_PATH"])
-    VERSION = Path(os.environ["VERSION"])
+    DATA_PATH = Path(os.environ["TALK_DATA_PATH"])
+    VERSION = os.environ["TALK_VERSION"]
+    version = VERSION.replace(".", "_")
     DATA_PATH, VERSION
-    return DATA_PATH, VERSION
+    return DATA_PATH, version
 
 
 @app.cell
@@ -291,10 +292,10 @@ def _(
 
 
 @app.cell
-def _(Path, VERSION, csv, os, output):
+def _(Path, csv, output, version):
     _output_path = Path("translation")
-    os.makedirs(_output_path, exist_ok=True)
-    with open((_output_path / VERSION).with_suffix(".csv"), "w") as f:
+    _output_path.mkdir(exist_ok=True)
+    with open((_output_path / version).with_suffix(".csv"), "w") as f:
         writer = csv.writer(f)
         writer.writerow(["new", "old"])
         writer.writerows(output)

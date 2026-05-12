@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.23.3"
+__generated_with = "0.23.5"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -19,9 +19,10 @@ with app.setup:
         replace_terms,
     )
 
-    DATA_PATH = Path(os.environ["REF_DATA_PATH"])
+    DATA_PATH = Path(os.environ["TALK_DATA_PATH"])
     LANGS = os.environ["LANGS"].split(",")
-    VERSION = os.environ["VERSION"]
+    VERSION = os.environ["TALK_VERSION"]
+    version = VERSION.replace(".", "_")
     INPUT_PATH = Path("staging/talk0")
     OUTPUT_PATH = Path("staging/talk1")
 
@@ -110,12 +111,12 @@ def _(locs, pros):
 
 @app.cell
 def _(enhance_text, textmap):
-    os.makedirs(OUTPUT_PATH, exist_ok=True)
+    OUTPUT_PATH.mkdir(exist_ok=True)
     for _lang in LANGS:
-        pl.scan_parquet(INPUT_PATH / f"GI_Talk_{VERSION}.parquet").pipe(
+        pl.scan_parquet(INPUT_PATH / f"GI_Talk_{version}.parquet").pipe(
             resolve_text, textmap[_lang]
         ).pipe(enhance_text, _lang).sink_parquet(
-            OUTPUT_PATH / f"GI_Talk_{_lang}_{VERSION}.parquet"
+            OUTPUT_PATH / f"GI_Talk_{_lang}_{version}.parquet"
         )
     return
 

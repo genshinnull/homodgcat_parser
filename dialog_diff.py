@@ -3,13 +3,15 @@ from pathlib import Path
 
 import polars as pl
 
-VERSION = os.environ["VERSION"]
-VERSION_OLD = os.environ["VERSION_OLD"]
+VERSION = os.environ["TALK_VERSION"]
+version = VERSION.replace(".", "_")
+VERSION_OLD = os.environ["TALK_OLD_VERSION"]
+version_old = VERSION_OLD.replace(".", "_")
 LANGS = os.environ["LANGS"].split(",")
 INPUT_PATH = Path("staging/talk1")
 OUTPUT_PATH = Path("product")
 
-os.makedirs(OUTPUT_PATH, exist_ok=True)
+OUTPUT_PATH.mkdir(exist_ok=True)
 
 
 def slim(df: pl.DataFrame) -> pl.DataFrame:
@@ -21,9 +23,9 @@ def condense_col(expr: pl.Expr) -> pl.Expr:
 
 
 for lang in LANGS:
-    old_df = pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{VERSION_OLD}.parquet")
+    old_df = pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{version_old}.parquet")
     new_df = pl.read_parquet(
-        INPUT_PATH / f"GI_Talk_{lang}_{VERSION}.parquet"
+        INPUT_PATH / f"GI_Talk_{lang}_{version}.parquet"
     ).with_columns(new=~pl.col.id.is_in(old_df.get_column("id").unique().to_list()))
     old_in_new_df = new_df.filter(~pl.col.new).drop("new")
     new_in_new_df = new_df.filter(pl.col.new).drop("new")
