@@ -77,9 +77,7 @@ def track_kv(df: pl.DataFrame):
     return df.sort("version", "value", "type", "key").with_columns(
         pl.col.version.first().over("key").alias("k_from"),
         pl.col.version.first().over("value").alias("v_from"),
-        pl.col.version.last().over("value").alias("v_to"),
         pl.col.version.first().over("key", "value").alias("kv_from"),
-        pl.col.version.last().over("key", "value").alias("kv_to"),
     )
 
 

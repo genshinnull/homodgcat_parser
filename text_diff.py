@@ -69,6 +69,6 @@ for lang in LANGS:
             + "\n"
         )
 
-    df.drop("version").unique().sort("value", "type", "key").write_parquet(
-        OUTPUT_PATH / f"GI_Text_{lang}.parquet"
-    )
+    df.group_by(pl.exclude("version")).agg("version").sort(
+        "value", "type", "key", "kv_from"
+    ).write_parquet(OUTPUT_PATH / f"GI_Text_{lang}.parquet")
