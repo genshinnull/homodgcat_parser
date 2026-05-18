@@ -348,9 +348,11 @@ class NpcGroupFile(BaseModel):
     talks: list[Talk]
 
 
-@app.class_definition
-class StoryboardGroupFile(BaseModel):
-    talks: list[Talk]
+@app.cell
+def _storyboardgroupfile():
+    # class StoryboardGroupFile(BaseModel):
+    #     talks: list[Talk]
+    return
 
 
 @app.cell(hide_code=True)
@@ -469,14 +471,14 @@ def _(parse_files):
 
 
 @app.cell
-def _(parse_files):
-    _storyboard_grp_data, storyboard_grp_errors = parse_files(
-        list((DATA_PATH / "BinOutput/Talk/StoryboardGroup").rglob("*.json")),
-        StoryboardGroupFile,
-    )
-    storyboard_grp_df = pl.DataFrame(_storyboard_grp_data).pipe(expand_talks)
-    len(storyboard_grp_errors), storyboard_grp_df
-    return (storyboard_grp_df,)
+def _():
+    # _storyboard_grp_data, storyboard_grp_errors = parse_files(
+    #     list((DATA_PATH / "BinOutput/Talk/StoryboardGroup").rglob("*.json")),
+    #     StoryboardGroupFile,
+    # )
+    # storyboard_grp_df = pl.DataFrame(_storyboard_grp_data).pipe(expand_talks)
+    # len(storyboard_grp_errors), storyboard_grp_df
+    return
 
 
 @app.cell(hide_code=True)
@@ -604,13 +606,7 @@ def _():
 
 
 @app.cell
-def _(
-    gadget_grp_df,
-    npc_grp_df,
-    quest_talk_df,
-    storyboard_grp_df,
-    talk_excel_df,
-):
+def _(gadget_grp_df, npc_grp_df, quest_talk_df, talk_excel_df):
     _subset = ["talkId", "questId"]
     quest_id_df = (
         pl.concat(
@@ -618,7 +614,7 @@ def _(
                 quest_talk_df.select(_subset),
                 gadget_grp_df.select(_subset),
                 npc_grp_df.select(_subset),
-                storyboard_grp_df.select(_subset),
+                # storyboard_grp_df.select(_subset),
                 talk_excel_df.select(_subset),
             ]
         )
