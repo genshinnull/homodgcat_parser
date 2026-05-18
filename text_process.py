@@ -58,8 +58,8 @@ def _():
 def _(locs, pros):
     def enhance_text(df: pl.DataFrame, lang: str):
         return df.with_columns(
-            pl.col.value.pipe(process_whitespace)
-            .pipe(remove_tags)
+            pl.col.value.pipe(remove_tags)
+            .pipe(process_whitespace)
             .pipe(replace_terms, locs, pros, lang),
         ).with_columns(
             keyLower=pl.col.key.str.to_lowercase(),

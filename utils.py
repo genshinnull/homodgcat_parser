@@ -46,7 +46,7 @@ def process_whitespace(expr: pl.Expr) -> pl.Expr:
 
 
 def remove_tags(expr: pl.Expr) -> pl.Expr:
-    return expr.str.replace_all(r"<.*?>", "")
+    return expr.str.replace_all(r"<[A-Za-z/].*?>", "")
 
 
 def replace_terms(

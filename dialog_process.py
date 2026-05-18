@@ -90,8 +90,8 @@ def _(locs, pros):
                 pl.col.talkRoleIdName.pipe(replace_terms, locs, pros, lang)
             ),
             talkRoleName=pl.col.talkRoleName.pipe(replace_terms, locs, pros, lang),
-            talkContent=pl.col.talkContent.pipe(process_whitespace)
-            .pipe(remove_tags)
+            talkContent=pl.col.talkContent.pipe(remove_tags)
+            .pipe(process_whitespace)
             .pipe(replace_terms, locs, pros, lang),
             talkIdExpandable=(
                 (pl.col.talkId.is_not_null()) & (pl.len().over("talkId") > 1)
