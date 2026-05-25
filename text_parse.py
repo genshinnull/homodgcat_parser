@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.23.5"
+__generated_with = "0.23.6"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -213,15 +213,11 @@ def _():
 def _():
     localization_df = (
         pl.read_json(DATA_PATH / "ExcelBinOutput/LocalizationExcelConfigData.json")
-        .filter(pl.col.assetType == "LOC_TEXT")
-        .select(
-            pl.col.id,
-            pl.col.enPath.str.split("/")
-            .list.last()
-            .str.split("_EN")
-            .list.first()
-            .alias("key"),
+        .with_columns(
+            pl.col("enPath").str.extract(r"ART/UI/(\w+)/EN").alias("key")
         )
+        .drop_nulls("key")
+        .select("id", "key")
     )
     localization_df
     return (localization_df,)
