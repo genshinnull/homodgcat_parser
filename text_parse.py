@@ -214,7 +214,7 @@ def _():
     localization_df = (
         pl.read_json(DATA_PATH / "ExcelBinOutput/LocalizationExcelConfigData.json")
         .with_columns(
-            pl.col("enPath").str.extract(r"ART/UI/(\w+)/EN").alias("key")
+            pl.col("enPath").str.extract(r"ART/UI/Readable/EN/(\w+)_EN").alias("key")
         )
         .drop_nulls("key")
         .select("id", "key")
