@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.23.5"
+__generated_with = "0.23.10"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -252,10 +252,22 @@ def _():
                 schema={
                     "id": pl.Int64,
                     "questId": pl.Int64,
+                    "loadType": pl.String,
                 },
             )
         )
-    talk_excel_df = pl.concat(_talk_excel_data).rename({"id": "talkId"})
+    talk_excel_df = (
+        pl.concat(_talk_excel_data)
+        .rename({"id": "talkId"})
+        .with_columns(
+            pl.when(pl.col("loadType") == "TALK_ACTIVITY")
+            .then(pl.col("questId"))
+            .alias("activityId"),
+            pl.when(pl.col("loadType") != "TALK_ACTIVITY")
+            .then(pl.col("questId"))
+            .alias("questId"),
+        )
+    )
     talk_excel_df
     return (talk_excel_df,)
 
@@ -627,13 +639,14 @@ def _(gadget_grp_df, npc_grp_df, quest_talk_df, talk_excel_df):
 
 
 @app.cell
-def _(activity_grp_df, quest_talk_df):
+def _(activity_grp_df, quest_talk_df, talk_excel_df):
     _subset = ["talkId", "activityId"]
     activity_id_df = (
         pl.concat(
             [
                 quest_talk_df.select(_subset),
                 activity_grp_df.select(_subset),
+                talk_excel_df.select(_subset),
             ]
         )
         .with_columns(activityId=pl.col.activityId.replace({0: None}))
