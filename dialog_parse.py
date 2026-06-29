@@ -213,9 +213,14 @@ def _():
 
 
 @app.cell
-def _():
-    reminder_df = pl.read_json(
-        DATA_PATH / "ExcelBinOutput/ReminderExcelConfigData.json",
+def _(translation):
+    reminder_df = pl.DataFrame(
+        orjson.loads(
+            load_file(
+                DATA_PATH / "ExcelBinOutput/ReminderExcelConfigData.json",
+                translation,
+            )
+        ),
         schema={
             "id": pl.Int64,
             "speakerTextMapHash": pl.String,

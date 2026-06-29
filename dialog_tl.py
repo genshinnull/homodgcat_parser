@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.23.5"
+__generated_with = "0.23.10"
 app = marimo.App(width="medium")
 
 
@@ -114,9 +114,15 @@ def _(DATA_PATH, load_json):
 
 
 @app.cell
-def _(storyboard_sample):
+def _(storyboard_sample, textmap):
     storyboard_id_field = ("id", find(storyboard_sample[0], [[510000101]]))
-    storyboard_name_field = ("name", find(storyboard_sample[0], [1253955835]))
+    storyboard_name_field = (
+        "name",
+        find(
+            storyboard_sample[0],
+            [int(hash) for hash in get_text_hashes("诺艾尔·剑术", textmap)],
+        ),
+    )
     storyboard_id_field, storyboard_name_field
     return storyboard_id_field, storyboard_name_field
 
@@ -247,6 +253,47 @@ def _(activity_sample):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ## ExcelBinOutput/ReminderExcelConfigData.json
+    """)
+    return
+
+
+@app.cell
+def _(DATA_PATH, load_json):
+    reminder_excel = load_json(
+        DATA_PATH / "ExcelBinOutput/ReminderExcelConfigData.json"
+    )
+    type(reminder_excel), len(reminder_excel)
+    return (reminder_excel,)
+
+
+@app.cell
+def _(reminder_excel, textmap):
+    reminder_speakerTextMapHash_field = (
+        "speakerTextMapHash",
+        find(
+            reminder_excel[0],
+            hints=[int(hash) for hash in get_text_hashes("派蒙", textmap)],
+        ),
+    )
+    reminder_contentTextMapHash_field = (
+        "contentTextMapHash",
+        find(
+            reminder_excel[0],
+            hints=[
+                int(hash)
+                for hash in get_text_hashes(
+                    "这里的七天神像，好像受到了那种怪物的影响？", textmap
+                )
+            ],
+        ),
+    )
+    return reminder_contentTextMapHash_field, reminder_speakerTextMapHash_field
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## Output
     """)
     return
@@ -265,6 +312,8 @@ def _(
     quest_talkTitleTextMapHash_field,
     quest_talks_field,
     quest_type_field,
+    reminder_contentTextMapHash_field,
+    reminder_speakerTextMapHash_field,
     storyboard_id_field,
     storyboard_name_field,
     talk_talkId_field,
@@ -287,6 +336,8 @@ def _(
         quest_questId_field,
         talk_talkId_field,
         activity_activityId_field,
+        reminder_speakerTextMapHash_field,
+        reminder_contentTextMapHash_field,
     ]
     return (output,)
 
