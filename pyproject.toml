@@ -3,7 +3,7 @@ name = "homodgcat_parser"
 version = "0.0.0"
 description = ""
 requires-python = ">=3.14"
-dependencies = ["gitpython", "marimo", "orjson", "polars", "pydantic", "pysubs2"]
+dependencies = ["gitpython", "marimo", "orjson", "polars<2.0.0", "pydantic", "pysubs2"]
 
 [dependency-groups]
 dev = ["marimo[recommended,mcp]", "ty"]
