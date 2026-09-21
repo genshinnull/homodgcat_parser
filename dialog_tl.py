@@ -73,22 +73,6 @@ def find(data: dict, hints: list):
         raise ValueError
 
 
-@app.function
-def find_sub(data: dict, hints: list):
-    for field in data.items():
-        for hint in hints:
-            if (
-                isinstance(field[1], list)
-                and len(field[1]) > 0
-                and isinstance(field[1][0], dict)
-            ):
-                for sub_field in field[1][0].items():
-                    if sub_field[1] == hint:
-                        return field
-    else:
-        raise ValueError
-
-
 @app.cell
 def _(DATA_PATH, get_textmap):
     textmap = get_textmap(DATA_PATH / "TextMap", "CHS")
@@ -130,6 +114,28 @@ def _(storyboard_sample, textmap):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ## BinOutput/Talk/474567cf.json
+    """)
+    return
+
+
+@app.cell
+def _(DATA_PATH, load_json):
+    some_sample = load_json(DATA_PATH / "BinOutput/Talk/474567cf.json")
+    type(some_sample), len(some_sample)
+    return (some_sample,)
+
+
+@app.cell
+def _(some_sample):
+    type_field = ("type", find(some_sample, ["FURNITURE"]))
+    type_field
+    return (type_field,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## BinOutput/Quest/5024.json
     """)
     return
@@ -144,16 +150,28 @@ def _(DATA_PATH, load_json):
 
 @app.cell
 def _(quest_sample):
-    quest_type_field = ("type", find(quest_sample, ["AQ"]))
     quest_id_field = ("id", find(quest_sample, [5024]))
     quest_chapterId_field = ("chapterId", find(quest_sample, [1504]))
-    quest_type_field, quest_id_field, quest_chapterId_field
-    return quest_chapterId_field, quest_id_field, quest_type_field
+    quest_id_field, quest_chapterId_field
+    return quest_chapterId_field, quest_id_field
+
+
+@app.function
+def find_quest_dialogList(data: dict):
+    for k, v in data.items():
+        if isinstance(v, list):
+            for vv in v:
+                if isinstance(vv, dict):
+                    for vvv in vv.values():
+                        if vvv == {"id": ""}:
+                            return (k, v)
+    else:
+        raise ValueError
 
 
 @app.cell
 def _(quest_sample, textmap):
-    dialogList = find_sub(quest_sample, ["TALK_SHOW_DEFAULT"])
+    dialogList = find_quest_dialogList(quest_sample)
     quest_dialogList_field = ("dialogList", dialogList[0])
     quest_talkContentTextMapHash_field = (
         "talkContentTextMapHash",
@@ -178,10 +196,7 @@ def _(quest_sample, textmap):
     )
     quest_talkRole_field = (
         "talkRole",
-        find(
-            dialogList[1][0],
-            [{"_id": "", "_roleId": 0, "_type": "TALK_ROLE_NONE"}],
-        ),
+        find(dialogList[1][0], [{"id": ""}]),
     )
     (
         quest_dialogList_field,
@@ -199,9 +214,22 @@ def _(quest_sample, textmap):
     )
 
 
+@app.function
+def find_quest_talks(data: dict):
+    for k, v in data.items():
+        if isinstance(v, list):
+            for vv in v:
+                if isinstance(vv, dict):
+                    for vvv in vv.values():
+                        if vvv == 8787466591375124282:
+                            return (k, v)
+    else:
+        raise ValueError
+
+
 @app.cell
 def _(quest_sample):
-    talks = find_sub(quest_sample, ["PLAY_MODE_SINGLE"])
+    talks = find_quest_talks(quest_sample)
     quest_talks_field = ("talks", talks[0])
     quest_questId_field = ("questId", find(talks[1][0], [5024]))
     return quest_questId_field, quest_talks_field
@@ -311,20 +339,21 @@ def _(
     quest_talkRole_field,
     quest_talkTitleTextMapHash_field,
     quest_talks_field,
-    quest_type_field,
     reminder_contentTextMapHash_field,
     reminder_speakerTextMapHash_field,
     storyboard_id_field,
     storyboard_name_field,
     talk_talkId_field,
+    type_field,
 ):
-    output = [
+    output = []
+    _output = [
         ("type", "damageRatio"),
         ("id", "_id"),
         ("type", "_type"),
         storyboard_id_field,
         storyboard_name_field,
-        quest_type_field,
+        type_field,
         quest_id_field,
         quest_chapterId_field,
         quest_dialogList_field,
@@ -339,6 +368,13 @@ def _(
         reminder_speakerTextMapHash_field,
         reminder_contentTextMapHash_field,
     ]
+    _skipped = []
+    for _o in _output:
+        if _o[0] == _o[1]:
+            _skipped.append(_o[0])
+        else:
+            output.append(_o)
+    _skipped
     return (output,)
 
 
