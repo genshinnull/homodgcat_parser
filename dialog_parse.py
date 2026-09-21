@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.23.10"
+__generated_with = "0.24.2"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -214,26 +214,30 @@ def _():
 
 @app.cell
 def _(translation):
-    reminder_df = pl.DataFrame(
-        orjson.loads(
-            load_file(
-                DATA_PATH / "ExcelBinOutput/ReminderExcelConfigData.json",
-                translation,
-            )
-        ),
-        schema={
-            "id": pl.Int64,
-            "speakerTextMapHash": pl.String,
-            "contentTextMapHash": pl.String,
-            "style": pl.String,
-            "nextReminderId": pl.Int64,
-        },
-    ).rename(
-        {
-            "speakerTextMapHash": "talkRoleIdName",
-            "contentTextMapHash": "talkContent",
-            "style": "talkRoleType",
-        }
+    reminder_df = (
+        pl.DataFrame(
+            orjson.loads(
+                load_file(
+                    DATA_PATH / "ExcelBinOutput/ReminderExcelConfigData.json",
+                    translation,
+                )
+            ),
+            schema={
+                "id": pl.Int64,
+                "speakerTextMapHash": pl.String,
+                "contentTextMapHash": pl.String,
+                "style": pl.String,
+                "nextReminderId": pl.Int64,
+            },
+        )
+        .rename(
+            {
+                "speakerTextMapHash": "talkRoleIdName",
+                "contentTextMapHash": "talkContent",
+                "style": "talkRoleType",
+            }
+        )
+        .with_columns(pl.selectors.string().fill_null(""))
     )
     reminder_df
     return (reminder_df,)
@@ -296,7 +300,9 @@ def _():
 @app.class_definition
 class TalkRole(BaseModel):
     id: str = Field(serialization_alias="talkRoleId")
-    type: str = Field(serialization_alias="talkRoleType")
+    type: str | None = Field(
+        serialization_alias="talkRoleType", default=""
+    )
 
 
 @app.class_definition
@@ -304,43 +310,45 @@ class Dialog(BaseModel):
     model_config = ConfigDict(coerce_numbers_to_str=True)
     id: int
     talkContentTextMapHash: str | None = Field(
-        default=None, serialization_alias="talkContent"
+        default="", serialization_alias="talkContent"
     )
     talkRoleNameTextMapHash: str | None = Field(
-        default=None, serialization_alias="talkRoleName"
+        default="", serialization_alias="talkRoleName"
     )
     talkTitleTextMapHash: str | None = Field(
-        default=None, serialization_alias="talkTitle"
+        default="", serialization_alias="talkTitle"
     )
     talkRole: TalkRole
 
 
 @app.class_definition
 class TalkFile(BaseModel):
-    type: str | None = Field(default=None)
+    type: str | None = ""
     talkId: int
     dialogList: list[Dialog] = Field(min_length=1)
 
 
 @app.class_definition
 class Talk(BaseModel):
-    questId: int | None = Field(default=None)
+    questId: int | None = None
     id: int = Field(serialization_alias="talkId")
 
 
 @app.class_definition
 class ActivityTalk(Talk):
-    questId: int | None = Field(default=None, serialization_alias="activityId")
+    questId: int | None = Field(
+        default=None, serialization_alias="activityId"
+    )
 
 
 @app.class_definition
 class QuestFile(BaseModel):
     id: int = Field(serialization_alias="questIdOuter")
-    type: str
-    chapterId: int | None = Field(default=None)
-    activityId: int | None = Field(default=None)
-    dialogList: list[Dialog] = Field(default=[])
-    talks: list[Talk] = Field(default=[])
+    type: str | None = ""
+    chapterId: int | None = None
+    activityId: int | None = None
+    dialogList: list[Dialog] | None = []
+    talks: list[Talk] | None = []
 
 
 @app.class_definition
@@ -351,25 +359,13 @@ class ActivityGroupFile(BaseModel):
 @app.class_definition
 class FreeGroupFile(BaseModel):
     talkId: int
-    type: str
+    type: str | None = None
     dialogList: list[Dialog]
 
 
 @app.class_definition
 class GadgetGroupFile(BaseModel):
     talks: list[Talk]
-
-
-@app.class_definition
-class NpcGroupFile(BaseModel):
-    talks: list[Talk]
-
-
-@app.cell
-def _storyboardgroupfile():
-    # class StoryboardGroupFile(BaseModel):
-    #     talks: list[Talk]
-    return
 
 
 @app.cell(hide_code=True)
@@ -381,18 +377,41 @@ def _():
 
 
 @app.cell
+def _():
+    _data = list(Path(DATA_PATH / "BinOutput/Talk").rglob("*.json"))
+    pl.DataFrame(
+        {
+            "stem": _p.stem,
+            "is_decimal": _p.stem.isdecimal(),
+            "is_alpha": _p.stem.isalpha(),
+            "dir": _p.parent.name,
+        }
+        for _p in _data
+    )
+    return
+
+
+@app.cell
 def _(translation):
-    def parse_files(files: list[Path], model: BaseModel) -> tuple[list, list]:
+    def parse_files(
+        files: list[Path], model: BaseModel, skip_alnum: bool = False
+    ) -> tuple[list, list]:
         valid_data = []
         error_data = []
-        with mo.status.progress_bar(total=len(files), remove_on_exit=True) as bar:
+        with mo.status.progress_bar(
+            total=len(files), remove_on_exit=True
+        ) as bar:
             for file in files:
+                if skip_alnum and not (
+                    file.stem.isdecimal() or file.stem == "GlobalDialog"
+                ):
+                    continue
                 relative_path = str(file.relative_to(DATA_PATH / "BinOutput"))
                 try:
                     file_content = load_file(file, translation)
-                    file_data = model.model_validate_json(file_content).model_dump(
-                        by_alias=True
-                    )
+                    file_data = model.model_validate_json(
+                        file_content
+                    ).model_dump(by_alias=True)
                     file_data.update({"path": relative_path})
                     valid_data.append(file_data)
                 except ValidationError:
@@ -476,28 +495,6 @@ def _(parse_files):
     return (gadget_grp_df,)
 
 
-@app.cell
-def _(parse_files):
-    _npc_grp_data, npc_grp_errors = parse_files(
-        list((DATA_PATH / "BinOutput/Talk/NpcGroup").rglob("*.json")),
-        NpcGroupFile,
-    )
-    npc_grp_df = pl.DataFrame(_npc_grp_data).pipe(expand_talks)
-    len(npc_grp_errors), npc_grp_df
-    return (npc_grp_df,)
-
-
-@app.cell
-def _():
-    # _storyboard_grp_data, storyboard_grp_errors = parse_files(
-    #     list((DATA_PATH / "BinOutput/Talk/StoryboardGroup").rglob("*.json")),
-    #     StoryboardGroupFile,
-    # )
-    # storyboard_grp_df = pl.DataFrame(_storyboard_grp_data).pipe(expand_talks)
-    # len(storyboard_grp_errors), storyboard_grp_df
-    return
-
-
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
@@ -529,6 +526,11 @@ def _(free_grp_df, quest_dialog_df, talk_df):
         pl.DataFrame(
             pl.concat(
                 [
+                    free_grp_df.with_columns(
+                        questId=pl.lit(None, dtype=pl.Int64),
+                        activityId=pl.lit(None, dtype=pl.Int64),
+                        chapterId=pl.lit(None, dtype=pl.Int64),
+                    ).select(_subset),
                     talk_df.with_columns(
                         questId=pl.lit(None, dtype=pl.Int64),
                         activityId=pl.lit(None, dtype=pl.Int64),
@@ -536,11 +538,6 @@ def _(free_grp_df, quest_dialog_df, talk_df):
                     ).select(_subset),
                     quest_dialog_df.with_columns(
                         talkId=pl.lit(None, dtype=pl.Int64)
-                    ).select(_subset),
-                    free_grp_df.with_columns(
-                        questId=pl.lit(None, dtype=pl.Int64),
-                        activityId=pl.lit(None, dtype=pl.Int64),
-                        chapterId=pl.lit(None, dtype=pl.Int64),
                     ).select(_subset),
                 ]
             ),
@@ -569,46 +566,9 @@ def _(free_grp_df, quest_dialog_df, talk_df):
 
 @app.cell
 def _(dialog_full_df):
-    dialog_df = (
-        (
-            dialog_full_df.drop("path").with_columns(
-                talkRoleId=pl.col.talkRoleId.str.strip_chars().replace(
-                    {"0": None}
-                ),
-                talkRoleName=pl.col.talkRoleName.replace({"0": None}),
-                talkTitle=pl.col.talkTitle.replace({"0": None}),
-                talkContent=pl.col.talkContent.replace({"0": None}),
-                talkId=pl.col.talkId.replace({0: None}),
-                activityId=pl.col.activityId.replace({0: None}),
-                chapterId=pl.col.chapterId.replace({0: None}),
-                type=pl.col.type.replace({"QUEST": "1QUEST"}),
-            )
-        )
-        .unique()
-        .sort(
-            "talkId",
-            "id",
-            "talkRoleId",
-            "talkRoleName",
-            "talkTitle",
-            "talkContent",
-            "questId",
-            "activityId",
-            "chapterId",
-            "type",
-        )
-        .group_by(
-            [
-                "talkId",
-                "id",
-                "talkRoleId",
-                "questId",
-                "activityId",
-                "chapterId",
-            ],
-            maintain_order=True,
-        )
-        .agg(pl.all().last())
+    dialog_df = dialog_full_df.drop("path").with_columns(
+        pl.selectors.string().replace({"0": None}),
+        pl.selectors.integer().replace({0: None}),
     )
     dialog_df
     return (dialog_df,)
@@ -623,15 +583,13 @@ def _():
 
 
 @app.cell
-def _(gadget_grp_df, npc_grp_df, quest_talk_df, talk_excel_df):
+def _(gadget_grp_df, quest_talk_df, talk_excel_df):
     _subset = ["talkId", "questId"]
     quest_id_df = (
         pl.concat(
             [
                 quest_talk_df.select(_subset),
                 gadget_grp_df.select(_subset),
-                npc_grp_df.select(_subset),
-                # storyboard_grp_df.select(_subset),
                 talk_excel_df.select(_subset),
             ]
         )
@@ -733,7 +691,7 @@ def _(activity_id_df, chapter_id_df, dialog_df, quest_id_df, type_df):
                 default=pl.col.type,
             ),
         )
-        .filter(pl.col.type != "1QUEST")
+        .unique()
         .sort(
             "talkId",
             "id",
@@ -832,7 +790,9 @@ def _(reminder_df):
         .with_columns(pl.col.talkId.reverse().cast(pl.Int32).neg())
         .explode("data")
         .unnest("data")
-        .select("id", "talkRoleIdName", "talkContent", "talkRoleType", "talkId")
+        .select(
+            "id", "talkRoleIdName", "talkContent", "talkRoleType", "talkId"
+        )
     )
     reminder_grp_df
     return (reminder_grp_df,)
@@ -862,7 +822,7 @@ def _(dialog_named_df, reminder_grp_df):
             ),
             dialog_named_df,
         ]
-    )
+    ).with_columns(pl.selectors.string().replace({"": None}))
     dialog_final_df
     return (dialog_final_df,)
 
@@ -882,6 +842,11 @@ def _(dialog_final_df):
     dialog_final_df.write_parquet(
         Path(_output_path / f"GI_Talk_{version}.parquet")
     )
+    return
+
+
+@app.cell
+def _():
     return
 
 

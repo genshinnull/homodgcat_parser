@@ -24,9 +24,20 @@ def condense_col(expr: pl.Expr) -> pl.Expr:
 
 for lang in LANGS:
     old_df = pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{version_old}.parquet")
-    new_df = pl.read_parquet(
-        INPUT_PATH / f"GI_Talk_{lang}_{version}.parquet"
-    ).with_columns(new=~pl.col.id.is_in(old_df.get_column("id").unique().to_list()))
+    new_df = (
+        pl.read_parquet(INPUT_PATH / f"GI_Talk_{lang}_{version}.parquet")
+        .with_columns(
+            new_id=~pl.col.id.is_in(old_df.get_column("id").unique().to_list()),
+            new_role=~pl.col.talkRoleIdName.is_in(
+                old_df.get_column("talkRoleIdName").unique().to_list()
+            ),
+            new_content=~pl.col.talkContent.is_in(
+                old_df.get_column("talkContent").unique().to_list()
+            ),
+        )
+        .with_columns(new=pl.col.new_id & (pl.col.new_role | pl.col.new_content))
+        .drop(pl.selectors.starts_with("new_"))
+    )
     old_in_new_df = new_df.filter(~pl.col.new).drop("new")
     new_in_new_df = new_df.filter(pl.col.new).drop("new")
 
@@ -70,7 +81,7 @@ for lang in LANGS:
             pl.col.talkRoleIdName.len().alias("count"),
             pl.col.talkRoleName.pipe(condense_col),
             pl.col.talkTitle.pipe(condense_col),
-            pl.col.type.drop_nulls().pipe(condense_col),
+            pl.col.type.fill_null("NULL").pipe(condense_col),
         )
         .sort(["count", "talkRoleIdName"], descending=[True, False])
     )
