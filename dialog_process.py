@@ -99,11 +99,6 @@ def _(locs, pros):
             questIdExpandable=(
                 (pl.col.questId.is_not_null()) & (pl.len().over("questId") > 1)
             ),
-        ).with_columns(
-            talkRoleIdNameLower=pl.col.talkRoleIdName.str.to_lowercase(),
-            talkRoleNameLower=pl.col.talkRoleName.str.to_lowercase(),
-            talkTitleLower=pl.col.talkTitle.str.to_lowercase(),
-            talkContentLower=pl.col.talkContent.str.to_lowercase(),
         )
 
     return (enhance_text,)

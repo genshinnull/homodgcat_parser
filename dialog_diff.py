@@ -15,7 +15,7 @@ OUTPUT_PATH.mkdir(exist_ok=True)
 
 
 def slim(df: pl.DataFrame) -> pl.DataFrame:
-    return df.drop(r"^.*(Expandable|Lower)$")
+    return df.drop(r"^.*Expandable$")
 
 
 def condense_col(expr: pl.Expr) -> pl.Expr:

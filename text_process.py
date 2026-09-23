@@ -61,12 +61,6 @@ def _(locs, pros):
             pl.col.value.pipe(remove_tags)
             .pipe(process_whitespace)
             .pipe(replace_terms, locs, pros, lang),
-        ).with_columns(
-            keyLower=pl.col.key.str.to_lowercase(),
-            valueLower=pl.col.value.str.to_lowercase(),
-            pagedLower=pl.col.paged.str.to_lowercase(),
-            bookLower=pl.col.book.str.to_lowercase(),
-            letterLower=pl.col.letter.str.to_lowercase(),
         )
 
     return (enhance_text,)
