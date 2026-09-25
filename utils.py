@@ -50,7 +50,7 @@ def remove_tags(expr: pl.Expr) -> pl.Expr:
 
 
 def replace_terms(
-    expr: pl.Expr, localization: dict, pronouns: dict[str, str], lang: str
+    expr: pl.Expr, localization: dict, pronouns: dict[str, dict[str, str]], lang: str
 ) -> pl.Expr:
     return (
         pl.when(expr.str.contains(r"(?s)^#.*\{"))
